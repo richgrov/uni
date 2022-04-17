@@ -6,6 +6,7 @@ set(UNI_SOURCES
     protocol/uni_packet.c
     protocol/uni_packet.h
     uni.c
+    uni_log.h
     uni_os_constants.h
 )
 

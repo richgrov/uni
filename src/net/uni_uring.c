@@ -3,12 +3,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <errno.h>
 #include <fcntl.h>
 #include "liburing.h"
 #include <unistd.h>
 
 #include "uni_connection.h"
 #include "protocol/uni_handshake.h"
+#include "uni_log.h"
 
 #define UNI_CONN_BACKLOG 16
 
@@ -22,6 +24,24 @@ typedef struct {
     UniUringAction action;
     UniConnection *conn;
 } UniUringEntry;
+
+static void uni_dump_conn_err(const char *type, UniConnection *conn, int res) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wformat-extra-args"
+    UNI_LOG("-- UNI %s ERROR --", type);
+    UNI_LOG("res: %d, res string: %s, errno: %d, errno string: %s", res, strerror(-res), errno, strerror(errno));
+    UNI_LOG("UniConnection: {", 0);
+    UNI_LOG("  fd = %d", conn->fd);
+    UNI_LOG("  state = %d", conn->state);
+    UNI_LOG("  handler = %d", conn->handler);
+    UNI_LOG("  packet buf, len = %p, %d", conn->packet_buf, conn->packet_len);
+    UNI_LOG("  header_len_limit = %d", conn->header_len_limit);
+    UNI_LOG("  header_buf [0], [1] = %x, %x", conn->header_buf[0], conn->header_buf[1]);
+    UNI_LOG("  header_size = %d", conn->header_size);
+    UNI_LOG("  read/write idx = %d", conn->write_idx);
+    UNI_LOG("}", 0);
+#pragma clang diagnostic pop
+}
 
 void uni_uring_accept(UniNetworking *net, int socket, struct sockaddr *addr, socklen_t *addr_len) {
     struct io_uring_sqe *sqe = io_uring_get_sqe(&net->ring);
@@ -188,9 +208,10 @@ bool uni_net_run(UniNetworking *net) {
                             }
                         }
                     } else if (cqe->res == 0) {
+                        close(entry->conn->fd);
                         uni_conn_free(entry->conn);
                     } else {
-                        // TODO: Should close() be called for res <= 0?
+                        uni_dump_conn_err("READ", entry->conn, cqe->res);
                     }
                     break;
 
