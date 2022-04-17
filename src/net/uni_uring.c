@@ -46,7 +46,6 @@ static void uni_dump_conn_err(const char *type, UniConnection *conn, int res) {
 void uni_uring_accept(UniNetworking *net, int socket, struct sockaddr *addr, socklen_t *addr_len) {
     struct io_uring_sqe *sqe = io_uring_get_sqe(&net->ring);
     io_uring_prep_accept(sqe, socket, addr, addr_len, 0);
-    io_uring_sqe_set_flags(sqe, 0); // TODO: Needed?
 
     UniUringEntry *entry = malloc(sizeof(UniUringEntry));
     entry->action = UNI_ACT_ACCEPT;
@@ -56,7 +55,6 @@ void uni_uring_accept(UniNetworking *net, int socket, struct sockaddr *addr, soc
 void uni_uring_read(UniNetworking *net, UniConnection *conn, char* buf, int max_len) {
     struct io_uring_sqe *sqe = io_uring_get_sqe(&net->ring);
     io_uring_prep_recv(sqe, conn->fd, buf, max_len, 0);
-    io_uring_sqe_set_flags(sqe, 0); // TODO: Needed?
 
     UniUringEntry *entry = malloc(sizeof(UniUringEntry));
     entry->action = UNI_ACT_READ;
