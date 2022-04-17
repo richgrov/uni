@@ -25,11 +25,15 @@ typedef struct {
     UniConnection *conn;
 } UniUringEntry;
 
+static void uni_dump_net_err(const char *type, int res) {
+    UNI_LOG("-- UNI %s ERROR --", type);
+    UNI_LOG("res: %d, res string: %s, errno: %d, errno string: %s", res, strerror(-res), errno, strerror(errno));
+}
+
 static void uni_dump_conn_err(const char *type, UniConnection *conn, int res) {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wformat-extra-args"
-    UNI_LOG("-- UNI %s ERROR --", type);
-    UNI_LOG("res: %d, res string: %s, errno: %d, errno string: %s", res, strerror(-res), errno, strerror(errno));
+    uni_dump_net_err(type, res);
     UNI_LOG("UniConnection: {", 0);
     UNI_LOG("  fd = %d", conn->fd);
     UNI_LOG("  state = %d", conn->state);
@@ -131,7 +135,7 @@ bool uni_net_run(UniNetworking *net) {
             UniUringEntry *entry = (UniUringEntry*) cqe->user_data;
             switch (entry->action) {
                 case UNI_ACT_ACCEPT:
-                    if (cqe->res != -1) {
+                    if (cqe->res >= -1) {
                         UniConnection *conn = malloc(sizeof(UniConnection));
                         uni_init_conn(conn);
                         uni_conn_prep_header(conn);
@@ -139,7 +143,7 @@ bool uni_net_run(UniNetworking *net) {
 
                         uni_uring_read(net, conn, conn->header_buf, sizeof(conn->header_buf));
                     } else {
-                        // TODO: Error
+                        uni_dump_net_err("ACCEPT", cqe->res);
                     }
 
                     uni_uring_accept(net, net->fd, (struct sockaddr *) &net->server_addr, &net->addr_len);
