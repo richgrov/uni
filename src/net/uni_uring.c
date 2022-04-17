@@ -105,13 +105,6 @@ bool uni_net_init(UniNetworking *net, uint16_t port) {
         return false;
     }
 
-    struct io_uring_probe *probe;
-    probe = io_uring_get_probe_ring(&net->ring);
-    if (!probe | !io_uring_opcode_supported(probe, IORING_OP_PROVIDE_BUFFERS)) {
-        return false;
-    }
-    free(probe);
-
     uni_uring_accept(net, net->fd, (struct sockaddr *) &net->server_addr, &net->addr_len);
 
     return true;
