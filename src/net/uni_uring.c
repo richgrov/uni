@@ -71,7 +71,7 @@ static void uni_conn_free(UniConnection *conn) {
     free(conn);
 }
 
-bool uni_net_init(UniNetworking *net, uint16_t port) {
+bool uni_net_init(UniNetworking *net, uint16_t port, UniError *err) {
     struct sockaddr_in server_addr;
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
@@ -82,15 +82,49 @@ bool uni_net_init(UniNetworking *net, uint16_t port) {
 
     net->fd = socket(AF_INET, SOCK_STREAM, 0);
     if (net->fd == -1) {
-        // TODO: Better way of signifying the exact error
+        if (err != NULL) {
+            switch (errno) {
+                case EAFNOSUPPORT:
+                case EINVAL:
+                case EPROTONOSUPPORT:
+                    *err = UNI_ERR_UNSUPPORTED;
+                    break;
+
+                case EACCES:
+                case EMFILE:
+                case ENFILE:
+                case ENOBUFS:
+                case ENOMEM:
+                    *err = UNI_ERR_LIMITED;
+                    break;
+
+                default:
+                    *err = UNI_ERR_UNKNOWN;
+                    break;
+            }
+        }
         return false;
     }
 
-    if (bind(
-        net->fd,
-        (struct sockaddr *) &server_addr,
-        sizeof(server_addr)
-    ) == -1) {
+    if (bind(net->fd, (struct sockaddr *) &server_addr, sizeof(server_addr)) == -1) {
+        if (err != NULL) {
+            switch (errno) {
+                case EACCES:
+                case EFAULT:
+                case ENOMEM:
+                case EROFS:
+                    *err = UNI_ERR_LIMITED;
+                    break;
+
+                case EADDRINUSE:
+                    *err = UNI_ERR_IN_USE;
+                    break;
+
+                default:
+                    *err = UNI_ERR_UNKNOWN;
+                    break;
+            }
+        }
         return false;
     }
 
@@ -98,10 +132,17 @@ bool uni_net_init(UniNetworking *net, uint16_t port) {
     memset(&params, 0, sizeof((params)));
 
     if (io_uring_queue_init_params(2048 /* TODO: Is this a good amount? */, &net->ring, &params) < 0) {
+        // TODO: Determine cause of error
+        if (err != NULL) {
+            *err = UNI_ERR_UNSUPPORTED;
+        }
         return false;
     }
 
     if (!(params.features & IORING_FEAT_FAST_POLL)) {
+        if (err != NULL) {
+            *err = UNI_ERR_UNSUPPORTED;
+        }
         return false;
     }
 

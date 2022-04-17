@@ -8,10 +8,10 @@ struct UniServerImpl {
     UniNetworking net;
 };
 
-UniServer *uni_create(uint16_t port) {
+UniServer *uni_create(uint16_t port, UniError *err) {
     UniServer *server = malloc(sizeof(UniServer));
 
-    if (!uni_net_init(&server->net, port)) {
+    if (!uni_net_init(&server->net, port, err)) {
         free(server);
         return NULL;
     }
