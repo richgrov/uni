@@ -1,5 +1,5 @@
-#ifndef UNI_HANDSHAKE_H
-#define UNI_HANDSHAKE_H
+#ifndef UNI_PACKET_HANDLER_H
+#define UNI_PACKET_HANDLER_H
 
 #include <stdbool.h>
 
@@ -7,4 +7,4 @@
 
 bool uni_recv_handshake(UniConnection *conn);
 
-#endif // UNI_HANDSHAKE_H
+#endif // UNI_PACKET_HANDLER_H

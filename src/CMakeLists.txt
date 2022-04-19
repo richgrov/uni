@@ -1,10 +1,10 @@
 set(UNI_SOURCES
     net/uni_connection.h
     net/uni_networking.h
-    protocol/uni_handshake.c
-    protocol/uni_handshake.h
     protocol/uni_packet.c
     protocol/uni_packet.h
+    protocol/uni_packet_handler.c
+    protocol/uni_packet_handler.h
     uni.c
     uni_log.h
     uni_os_constants.h
