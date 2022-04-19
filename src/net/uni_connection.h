@@ -35,7 +35,6 @@ typedef struct {
 static inline void uni_init_conn(UniConnection *conn) {
     conn->handler = UNI_HANDLER_HANDSHAKE;
     conn->packet_buf = NULL;
-    conn->packet_len = 0;
     conn->header_len_limit = 1;
     conn->header_size = 0;
 }
@@ -43,6 +42,7 @@ static inline void uni_init_conn(UniConnection *conn) {
 static inline void uni_conn_prep_header(UniConnection *conn) {
     conn->state = UNI_READING_HEADER;
     conn->header_size = 0;
+    conn->packet_len = 0;
 }
 
 static inline void uni_conn_prep_body(UniConnection *conn) {
