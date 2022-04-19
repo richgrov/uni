@@ -230,6 +230,10 @@ bool uni_net_run(UniNetworking *net) {
                                     case UNI_HANDLER_HANDSHAKE:
                                         success = uni_recv_handshake(conn);
                                         break;
+
+                                    case UNI_HANDLER_LOGIN_START:
+                                        success = uni_recv_login_start(conn);
+                                        break;
                                 }
 
                                 if (!success) {

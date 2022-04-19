@@ -7,4 +7,6 @@
 
 bool uni_recv_handshake(UniConnection *conn);
 
+bool uni_recv_login_start(UniConnection *conn);
+
 #endif // UNI_PACKET_HANDLER_H

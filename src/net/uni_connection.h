@@ -9,7 +9,8 @@ typedef enum {
 } UniReadState;
 
 typedef enum {
-    UNI_HANDLER_HANDSHAKE
+    UNI_HANDLER_HANDSHAKE,
+    UNI_HANDLER_LOGIN_START,
 } UniPacketHandler;
 
 typedef struct {
