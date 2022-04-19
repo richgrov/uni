@@ -32,5 +32,5 @@ bool uni_read_str_ignore(UniConnection *buf, int max_len) {
     }
 
     buf->read_idx += str_len;
-    return buf->read_idx < buf->packet_len;
+    return buf->read_idx <= buf->packet_len;
 }
