@@ -17,7 +17,9 @@
 typedef enum {
     UNI_ACT_READ,
     UNI_ACT_WRITE,
-    UNI_ACT_ACCEPT
+    UNI_ACT_ACCEPT,
+    UNI_ACT_TIMEOUT,
+    UNI_ACT_TIMEOUT_CANCEL
 } UniUringAction;
 
 typedef struct {
@@ -64,11 +66,48 @@ void uni_uring_read(UniNetworking *net, UniConnection *conn, char* buf, int max_
     entry->action = UNI_ACT_READ;
     entry->conn = conn;
     sqe->user_data = (__u64) entry;
+    conn->refcount++;
 }
 
-static void uni_conn_free(UniConnection *conn) {
-    free(conn->packet_buf);
-    free(conn);
+void uni_uring_timeout(UniNetworking *net, UniConnection *conn, int secs) {
+    struct io_uring_sqe *sqe = io_uring_get_sqe(&net->ring);
+    conn->timeout.tv_sec = secs;
+    conn->timeout.tv_nsec = 0;
+    io_uring_prep_timeout(sqe, &conn->timeout, 0, 0);
+
+    UniUringEntry *entry = malloc(sizeof(UniUringEntry));
+    entry->action = UNI_ACT_TIMEOUT;
+    entry->conn = conn;
+    sqe->user_data = (__u64) entry;
+    conn->timeout_usr_data = entry;
+    conn->refcount++;
+}
+
+void uni_uring_cancel_timeout(UniNetworking *net, UniConnection *conn) {
+    struct io_uring_sqe *sqe = io_uring_get_sqe(&net->ring);
+    io_uring_prep_timeout_remove(sqe, (__u64) conn->timeout_usr_data, 0);
+
+    UniUringEntry *entry = malloc(sizeof(UniUringEntry));
+    entry->action = UNI_ACT_TIMEOUT_CANCEL;
+    entry->conn = conn;
+    sqe->user_data = (__u64) entry;
+    conn->refcount++;
+}
+
+static void uni_conn_shutdown(UniNetworking *net, UniConnection *conn) {
+    uni_uring_cancel_timeout(net, conn);
+    shutdown(conn->fd, SHUT_RDWR);
+}
+
+static bool uni_conn_gc(UniConnection *conn) {
+    if (conn->refcount == 0) {
+        close(conn->fd);
+        free(conn->packet_buf);
+        free(conn);
+        return true;
+    }
+
+    return false;
 }
 
 bool uni_net_init(UniNetworking *net, uint16_t port, UniError *err) {
@@ -175,6 +214,7 @@ bool uni_net_run(UniNetworking *net) {
                         uni_conn_prep_header(conn);
                         conn->fd = cqe->res;
 
+                        uni_uring_timeout(net, conn, 2);
                         uni_uring_read(net, conn, conn->header_buf, sizeof(conn->header_buf));
                     } else {
                         uni_dump_net_err("ACCEPT", cqe->res);
@@ -184,6 +224,11 @@ bool uni_net_run(UniNetworking *net) {
                     break;
 
                 case UNI_ACT_READ:
+                    entry->conn->refcount--;
+                    if (uni_conn_gc(entry->conn)) {
+                        break;
+                    }
+
                     if (cqe->res > 0) {
                         UniConnection *conn = entry->conn;
 
@@ -193,14 +238,12 @@ bool uni_net_run(UniNetworking *net) {
                                 conn->packet_len |= (b & 0b01111111) << (7 * conn->header_size++);
 
                                 if (conn->header_size > conn->header_len_limit) {
-                                    close(conn->fd);
-                                    uni_conn_free(conn);
+                                    uni_conn_shutdown(net, conn);
                                     goto nothing;
                                 } else if ((b & 0b10000000) == 0) {
                                     conn->packet_buf = realloc(conn->packet_buf, conn->packet_len);
                                     if (conn->packet_buf == NULL) {
-                                        close(conn->fd);
-                                        uni_conn_free(conn);
+                                        uni_conn_shutdown(net, conn);
                                         goto nothing;
                                     }
 
@@ -237,8 +280,7 @@ bool uni_net_run(UniNetworking *net) {
                                 }
 
                                 if (!success) {
-                                    close(conn->fd);
-                                    uni_conn_free(conn);
+                                    uni_conn_shutdown(net, conn);
                                 } else {
                                     uni_conn_prep_header(conn);
                                     uni_uring_read(net, conn, conn->header_buf, sizeof(conn->header_buf));
@@ -248,14 +290,28 @@ bool uni_net_run(UniNetworking *net) {
                             }
                         }
                     } else if (cqe->res == 0) {
-                        close(entry->conn->fd);
-                        uni_conn_free(entry->conn);
+                        uni_conn_shutdown(net, entry->conn);
                     } else {
                         uni_dump_conn_err("READ", entry->conn, cqe->res);
                     }
                     break;
 
                 case UNI_ACT_WRITE:
+                    break;
+
+                case UNI_ACT_TIMEOUT:
+                    entry->conn->refcount--;
+                    if (cqe->res != -ECANCELED) {
+                        UniConnection *conn = entry->conn;
+                        if (!uni_conn_gc(conn)) {
+                            shutdown(conn->fd, SHUT_RDWR);
+                        }
+                    }
+                    break;
+
+                case UNI_ACT_TIMEOUT_CANCEL:
+                    entry->conn->refcount--;
+                    uni_conn_gc(entry->conn);
                     break;
             }
 

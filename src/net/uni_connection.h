@@ -3,6 +3,12 @@
 
 #include <stddef.h>
 
+#include "uni_os_constants.h"
+
+#ifdef UNI_OS_LINUX
+#include "liburing.h"
+#endif // UNI_OS_LINUX
+
 typedef enum {
     UNI_READING_HEADER,
     UNI_READING_BODY
@@ -14,10 +20,15 @@ typedef enum {
 } UniPacketHandler;
 
 typedef struct {
+#ifdef UNI_OS_LINUX
     int fd;
+    struct __kernel_timespec timeout;
+    void *timeout_usr_data;
+#endif // UNI_OS_LINUX
 
     UniReadState state;
     UniPacketHandler handler;
+    int refcount;
 
     char *packet_buf;
     int packet_len;
@@ -35,6 +46,7 @@ typedef struct {
 
 static inline void uni_init_conn(UniConnection *conn) {
     conn->handler = UNI_HANDLER_HANDSHAKE;
+    conn->refcount = 0;
     conn->packet_buf = NULL;
     conn->header_len_limit = 1;
     conn->header_size = 0;
