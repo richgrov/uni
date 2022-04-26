@@ -20,5 +20,5 @@ UniServer *uni_create(uint16_t port, UniError *err) {
 }
 
 bool uni_run(UniServer *server) {
-    uni_net_run(&server->net);
+    return uni_net_run(&server->net);
 }
