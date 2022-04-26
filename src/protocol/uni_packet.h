@@ -7,8 +7,14 @@
 
 #include "net/uni_connection.h"
 
+// Read a variable-length encoded 32-bit integer from the connection's read
+// buffer. On success, true is returned and *result is set with the result. On
+// failure, false is returned.
 bool uni_read_varint(UniConnection *buf, int *result);
 
+// Read an unsigned 16-bit integer from the connection's read buffer.
+// On success, true is returned and *result is set with the result. On failure,
+// false is returned.
 static inline bool uni_read_ushort(UniConnection *buf, uint16_t *result) {
     if (buf->read_idx + sizeof(uint16_t) >= buf->packet_len) {
         return false;
@@ -27,6 +33,11 @@ static inline bool uni_read_ushort(UniConnection *buf, uint16_t *result) {
     return true;
 }
 
+// Read a string from the connection's read buffer, but ignore the actual data.
+// On success, true is returned. On failure, false is returned.
+bool uni_read_str_ignore(UniConnection *buf, int max_len);
+
+// Calculate the size of a varint as if it were to be written to a connection.
 static inline int uni_varint_size(int i) {
     if (i < 128) {
         return 1;
@@ -41,12 +52,12 @@ static inline int uni_varint_size(int i) {
     }
 }
 
+// Calculate the size of a string as if it were to be written to a connection.
 static inline int uni_str_size(int str_len) {
     return uni_varint_size(str_len) + str_len;
 }
 
-bool uni_read_str_ignore(UniConnection *buf, int max_len);
-
+// Encodes/writes a varint to the specified buffer.
 static inline char *uni_write_varint(char *dest, int val) {
     int i = 0;
 
@@ -67,13 +78,16 @@ static inline char *uni_write_varint(char *dest, int val) {
     return (char *) dest + i;
 }
 
-// Write a null-terminated string along with its length header.
+// Encodes/writes a string to the specified buffer.
 static inline char *uni_write_str(char *dest, char *const str, int len) {
     dest = uni_write_varint(dest, len);
     memcpy(dest, str, len);
     return dest + len;
 }
 
+// Allocates a packet with the given size on the heap. If the desired length of
+// the packet exceeds the maximum length of a varint header (3 bytes), the 'buf'
+// field of the returned value will be NULL.
 UniPacketOut uni_alloc_packet(int size);
 
 #endif // UNI_PACKET_H
