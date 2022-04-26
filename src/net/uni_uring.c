@@ -69,6 +69,18 @@ void uni_uring_read(UniNetworking *net, UniConnection *conn, char* buf, int max_
     conn->refcount++;
 }
 
+// Queue a write action to a socket
+void uni_uring_write(UniNetworking *net, UniConnection *conn) {
+    struct io_uring_sqe *sqe = io_uring_get_sqe(&net->ring);
+    io_uring_prep_send(sqe, conn->fd, conn->out_pkt.buf, conn->out_pkt.len, 0);
+
+    UniUringEntry *entry = malloc(sizeof(UniUringEntry));
+    entry->action = UNI_ACT_WRITE;
+    entry->conn = conn;
+    sqe->user_data = (__u64) entry;
+    conn->refcount++;
+}
+
 void uni_uring_timeout(UniNetworking *net, UniConnection *conn, int secs) {
     struct io_uring_sqe *sqe = io_uring_get_sqe(&net->ring);
     conn->timeout.tv_sec = secs;
@@ -210,7 +222,7 @@ bool uni_net_run(UniNetworking *net) {
                 case UNI_ACT_ACCEPT:
                     if (cqe->res >= -1) {
                         UniConnection *conn = malloc(sizeof(UniConnection));
-                        uni_init_conn(conn);
+                        uni_init_conn(net, conn);
                         uni_conn_prep_header(conn);
                         conn->fd = cqe->res;
 
@@ -277,6 +289,10 @@ bool uni_net_run(UniNetworking *net) {
                                     case UNI_HANDLER_LOGIN_START:
                                         success = uni_recv_login_start(conn);
                                         break;
+
+                                    case UNI_HANDLER_PLUGIN_REQ:
+                                        uni_recv_plugin_req(conn);
+                                        break;
                                 }
 
                                 if (!success) {
@@ -297,6 +313,23 @@ bool uni_net_run(UniNetworking *net) {
                     break;
 
                 case UNI_ACT_WRITE:
+                    entry->conn->refcount--;
+                    if (uni_conn_gc(entry->conn)) {
+                        break;
+                    }
+
+                    if (cqe->res > 0) {
+                        UniConnection *conn = entry->conn;
+                        conn->out_pkt.write_idx += cqe->res;
+
+                        if (conn->out_pkt.write_idx == conn->out_pkt.len) {
+                            free(conn->out_pkt.buf);
+                        } else {
+                            uni_uring_write(net, conn);
+                        }
+                    } else {
+                        uni_dump_conn_err("WRITE", entry->conn, cqe->res);
+                    }
                     break;
 
                 case UNI_ACT_TIMEOUT:
@@ -322,4 +355,10 @@ bool uni_net_run(UniNetworking *net) {
     }
 
     return true;
+}
+
+void uni_conn_write(UniConnection *conn, UniPacketOut *packet) {
+    packet->write_idx = 0;
+    conn->out_pkt = *packet;
+    uni_uring_write(conn->net, conn);
 }

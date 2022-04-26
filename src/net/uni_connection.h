@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 
+#include "uni_networking.h"
 #include "uni_os_constants.h"
 
 #ifdef UNI_OS_LINUX
@@ -17,9 +18,25 @@ typedef enum {
 typedef enum {
     UNI_HANDLER_HANDSHAKE,
     UNI_HANDLER_LOGIN_START,
+    UNI_HANDLER_PLUGIN_REQ
 } UniPacketHandler;
 
 typedef struct {
+    char* buf;
+    int len;
+
+    // Used for two reasons:
+    // 1. Each packet requires a varint header at the beginning to indicate its
+    // length. This is the index AFTER the header so the rest of the packet can
+    // be written properly.
+    // 2. When writing the packet, not all data may be writen at once. This
+    // tracks how much has, and hasn't been written.
+    int write_idx;
+} UniPacketOut;
+
+typedef struct {
+    UniNetworking *net;
+
 #ifdef UNI_OS_LINUX
     int fd;
     struct __kernel_timespec timeout;
@@ -32,6 +49,7 @@ typedef struct {
 
     char *packet_buf;
     int packet_len;
+    UniPacketOut out_pkt;
 
     int header_len_limit;
     union {
@@ -42,9 +60,14 @@ typedef struct {
         int write_idx;
         int read_idx;
     };
+
+    union {
+        int plugin_req_id;
+    };
 } UniConnection;
 
-static inline void uni_init_conn(UniConnection *conn) {
+static inline void uni_init_conn(UniNetworking *net, UniConnection *conn) {
+    conn->net = net;
     conn->handler = UNI_HANDLER_HANDSHAKE;
     conn->refcount = 0;
     conn->packet_buf = NULL;
@@ -66,5 +89,7 @@ static inline void uni_conn_prep_body(UniConnection *conn) {
 static inline void uni_conn_prep_handle(UniConnection *conn) {
     conn->read_idx = 0;
 }
+
+void uni_conn_write(UniConnection *conn, UniPacketOut *packet);
 
 #endif // UNI_CONNECTION_H

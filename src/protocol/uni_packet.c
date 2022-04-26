@@ -1,5 +1,7 @@
 #include "uni_packet.h"
 
+#include <stdlib.h>
+
 bool uni_read_varint(UniConnection *buf, int *result) {
     *result = 0;
 
@@ -33,4 +35,21 @@ bool uni_read_str_ignore(UniConnection *buf, int max_len) {
 
     buf->read_idx += str_len;
     return buf->read_idx <= buf->packet_len;
+}
+
+UniPacketOut uni_alloc_packet(int size) {
+    UniPacketOut packet;
+
+    int header_size = uni_varint_size(size);
+    if (header_size > 3) {
+        // Packet length headers can't be longer than 3 bytes.
+        // (i.e. packets must be less than 2097152 bytes in length)
+        packet.buf = NULL;
+    } else {
+        packet.buf = malloc(header_size + size);
+        packet.len = header_size + size;
+        packet.write_idx = header_size;
+        uni_write_varint(packet.buf, size);
+    }
+    return packet;
 }
