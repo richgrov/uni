@@ -4,7 +4,7 @@
 
 int main(int argc, char** argv) {
     UniError err;
-    UniServer *server = uni_create(25565, &err);
+    UniServer *server = uni_create(25566, &err);
 
     if (server == NULL) {
         printf("Couldn't start server: ");
