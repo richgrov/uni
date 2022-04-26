@@ -58,6 +58,7 @@ void uni_uring_accept(UniNetworking *net, int socket, struct sockaddr *addr, soc
     sqe->user_data = (__u64) entry;
 }
 
+// Queue a read operation.
 void uni_uring_read(UniNetworking *net, UniConnection *conn, char* buf, int max_len) {
     struct io_uring_sqe *sqe = io_uring_get_sqe(&net->ring);
     io_uring_prep_recv(sqe, conn->fd, buf, max_len, 0);
@@ -69,7 +70,7 @@ void uni_uring_read(UniNetworking *net, UniConnection *conn, char* buf, int max_
     conn->refcount++;
 }
 
-// Queue a write action to a socket
+// Queue a write operation.
 void uni_uring_write(UniNetworking *net, UniConnection *conn) {
     struct io_uring_sqe *sqe = io_uring_get_sqe(&net->ring);
     io_uring_prep_send(sqe, conn->fd, conn->out_pkt.buf, conn->out_pkt.len, 0);
@@ -81,6 +82,7 @@ void uni_uring_write(UniNetworking *net, UniConnection *conn) {
     conn->refcount++;
 }
 
+// Set a timeout and await its completion.
 void uni_uring_timeout(UniNetworking *net, UniConnection *conn, int secs) {
     struct io_uring_sqe *sqe = io_uring_get_sqe(&net->ring);
     conn->timeout.tv_sec = secs;
@@ -95,6 +97,9 @@ void uni_uring_timeout(UniNetworking *net, UniConnection *conn, int secs) {
     conn->refcount++;
 }
 
+// Cancel an ongoing timeout. This will result in both the timeout completing
+// with code -ECANCELED and the cancellation operation itself reporting that it
+// has completed.
 void uni_uring_cancel_timeout(UniNetworking *net, UniConnection *conn) {
     struct io_uring_sqe *sqe = io_uring_get_sqe(&net->ring);
     io_uring_prep_timeout_remove(sqe, (__u64) conn->timeout_usr_data, 0);
@@ -106,11 +111,15 @@ void uni_uring_cancel_timeout(UniNetworking *net, UniConnection *conn) {
     conn->refcount++;
 }
 
+// Shutdown all read/write operations and cancel the current timeout on a
+// connection.
 static void uni_conn_shutdown(UniNetworking *net, UniConnection *conn) {
     uni_uring_cancel_timeout(net, conn);
     shutdown(conn->fd, SHUT_RDWR);
 }
 
+// Attempt to free and close a connection if its reference count is zero.
+// Returns true on success, false otherwise.
 static bool uni_conn_gc(UniConnection *conn) {
     if (conn->refcount == 0) {
         close(conn->fd);

@@ -75,21 +75,27 @@ static inline void uni_init_conn(UniNetworking *net, UniConnection *conn) {
     conn->header_size = 0;
 }
 
+// Prepares the connection's state so it is ready to read a packet's header.
 static inline void uni_conn_prep_header(UniConnection *conn) {
     conn->state = UNI_READING_HEADER;
     conn->header_size = 0;
     conn->packet_len = 0;
 }
 
+// Prepares the connection's state so it is ready to read a packet's body.
 static inline void uni_conn_prep_body(UniConnection *conn) {
     conn->state = UNI_READING_BODY;
     conn->write_idx = 0;
 }
 
+// Prepares the connection's state so it is ready to call a packet handler
+// function.
 static inline void uni_conn_prep_handle(UniConnection *conn) {
     conn->read_idx = 0;
 }
 
+// Prepares the connection's state for writing a packet + queues the write
+// operation.
 void uni_conn_write(UniConnection *conn, UniPacketOut *packet);
 
 #endif // UNI_CONNECTION_H
