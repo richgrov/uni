@@ -289,8 +289,8 @@ bool uni_net_run(UniNetworking *net) {
                                         success = uni_recv_login_start(conn);
                                         break;
 
-                                    case UNI_HANDLER_PLUGIN_REQ:
-                                        uni_recv_plugin_req(conn);
+                                    case UNI_HANDLER_PLUGIN_RES:
+                                        uni_recv_plugin_res(conn);
                                         break;
                                 }
 

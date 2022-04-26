@@ -18,7 +18,7 @@ typedef enum {
 typedef enum {
     UNI_HANDLER_HANDSHAKE,
     UNI_HANDLER_LOGIN_START,
-    UNI_HANDLER_PLUGIN_REQ
+    UNI_HANDLER_PLUGIN_RES
 } UniPacketHandler;
 
 typedef struct {

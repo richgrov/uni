@@ -66,11 +66,11 @@ bool uni_recv_login_start(UniConnection *conn) {
 
     uni_conn_write(conn, &pkt);
 
-    conn->handler = UNI_HANDLER_PLUGIN_REQ;
+    conn->handler = UNI_HANDLER_PLUGIN_RES;
     return true;
 }
 
-bool uni_recv_plugin_req(UniConnection *conn) {
+bool uni_recv_plugin_res(UniConnection *conn) {
     int id;
     if (!uni_read_varint(conn, &id) || id != UNI_PKT_LOGIN_PLUGIN_RES) {
         return false;

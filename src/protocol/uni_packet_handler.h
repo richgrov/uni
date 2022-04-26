@@ -5,10 +5,13 @@
 
 #include "net/uni_connection.h"
 
+// Handle a 'Handshake' packet from the client.
 bool uni_recv_handshake(UniConnection *conn);
 
+// Handle a 'Login Start' packet from the client.
 bool uni_recv_login_start(UniConnection *conn);
 
-bool uni_recv_plugin_req(UniConnection *conn);
+// Handle a 'Login Plugin Response' packet from the client.
+bool uni_recv_plugin_res(UniConnection *conn);
 
 #endif // UNI_PACKET_HANDLER_H
