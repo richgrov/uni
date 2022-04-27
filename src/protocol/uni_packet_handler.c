@@ -10,6 +10,7 @@
 #define UNI_PKT_LOGIN_START 0x00
 #define UNI_PKT_LOGIN_PLUGIN_REQ 0x04
 #define UNI_PKT_LOGIN_PLUGIN_RES 0x02
+#define UNI_PKT_LOGIN_SUCCESS 0x02
 
 #define UNI_PLUGIN_REQ_ID "velocity:player_info"
 #define UNI_STATE_LOGIN 2
@@ -165,6 +166,24 @@ static bool uni_recv_plugin_res(UniConnection *conn) {
     }
 
     conn->user_ptr = user_ptr;
+
+    int pkt_size =
+        uni_varint_size(UNI_PKT_LOGIN_SUCCESS) +
+        16 + /* UUID */
+        uni_str_size(data.name_len);
+
+    UniPacketOut pkt = uni_alloc_packet(pkt_size);
+    if (pkt.buf == NULL) {
+        UNI_LOG("Failed to allocate packet", 0);
+        return false;
+    }
+
+    char *cursor = &pkt.buf[pkt.write_idx];
+    cursor = uni_write_varint(cursor, UNI_PKT_LOGIN_SUCCESS);
+    cursor = uni_write_bytes(cursor, data.uuid_raw, 16);
+             uni_write_str(cursor, data.player_name, data.name_len);
+
+    uni_conn_write(conn, &pkt);
     return true;
 
 property_fail:

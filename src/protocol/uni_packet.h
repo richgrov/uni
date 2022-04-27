@@ -112,8 +112,14 @@ static inline char *uni_write_varint(char *dest, int val) {
     return (char *) dest + i;
 }
 
+// Encodes/writes raw data to the specified buffer.
+static inline char *uni_write_bytes(char *dest, const unsigned char *src, int len) {
+    memcpy(dest, src, len);
+    return dest + len;
+}
+
 // Encodes/writes a string to the specified buffer.
-static inline char *uni_write_str(char *dest, char *const str, int len) {
+static inline char *uni_write_str(char *dest, const char *str, int len) {
     dest = uni_write_varint(dest, len);
     memcpy(dest, str, len);
     return dest + len;
