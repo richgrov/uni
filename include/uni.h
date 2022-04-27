@@ -21,11 +21,13 @@ typedef enum {
 } UniError;
 
 // Initializes a uni server.
+// 'secret' is the shared secret configured in the proxy. It must be null-
+// terminated.
 // In case of error, NULL will be returned and *err will be set to the error
 // which occurred.
 // err is allowed to be NULL, if so, no attempt at returning an error code will
 // be made.
-UniServer *uni_create(uint16_t port, UniError *err);
+UniServer *uni_create(uint16_t port, const char *secret, UniError *err);
 
 bool uni_run(UniServer *server);
 

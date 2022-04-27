@@ -4,6 +4,7 @@
 
 #include "uni_packet.h"
 #include "uni_log.h"
+#include "uni_server.h"
 
 #define UNI_PKT_HANDSHAKE 0x00
 #define UNI_PKT_LOGIN_SUCCESS 0x00
@@ -92,8 +93,14 @@ static bool uni_recv_plugin_res(UniConnection *conn) {
         return false;
     }
 
-    // TODO: Verify HMAC
-    conn->read_idx += 32;
+    unsigned char* hmac = uni_read_bytes(conn, 32);
+    if (hmac == NULL) {
+        return false;
+    }
+
+    if (!uni_verify_hmac(conn->net->server, &conn->packet_buf[conn->read_idx], conn->packet_len - conn->read_idx, hmac)) {
+        return false;
+    }
 
     int protocol_ver;
     if (!uni_read_varint(conn, &protocol_ver)) {

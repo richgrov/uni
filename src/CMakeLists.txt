@@ -8,6 +8,7 @@ set(UNI_SOURCES
     uni.c
     uni_log.h
     uni_os_constants.h
+    uni_server.h
 )
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
