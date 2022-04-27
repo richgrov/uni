@@ -11,10 +11,7 @@ set(UNI_SOURCES
 )
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    set(UNI_SOURCES ${UNI_SOURCES}
-        net/uni_uring.c
-        net/uni_uring.h
-    )
+    set(UNI_SOURCES ${UNI_SOURCES} net/uni_uring.c)
 endif()
 
 add_library(uni ${UNI_SOURCES})
