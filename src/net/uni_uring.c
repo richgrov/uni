@@ -59,7 +59,7 @@ void uni_uring_accept(UniNetworking *net, int socket, struct sockaddr *addr, soc
 }
 
 // Queue a read operation.
-void uni_uring_read(UniNetworking *net, UniConnection *conn, char* buf, int max_len) {
+void uni_uring_read(UniNetworking *net, UniConnection *conn, unsigned char* buf, int max_len) {
     struct io_uring_sqe *sqe = io_uring_get_sqe(&net->ring);
     io_uring_prep_recv(sqe, conn->fd, buf, max_len, 0);
 
@@ -254,7 +254,7 @@ bool uni_net_run(UniNetworking *net) {
                     if (cqe->res > 0) {
                         if (conn->state == UNI_READING_HEADER) {
                             for (int i = 0; i < cqe->res; i++) {
-                                char b = conn->header_buf[i];
+                                unsigned char b = conn->header_buf[i];
                                 conn->packet_len |= (b & 0b01111111) << (7 * conn->header_size++);
 
                                 if (conn->header_size > conn->header_len_limit) {
