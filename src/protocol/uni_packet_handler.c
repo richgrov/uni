@@ -67,6 +67,7 @@ bool uni_recv_login_start(UniConnection *conn) {
     uni_conn_write(conn, &pkt);
 
     conn->handler = UNI_HANDLER_PLUGIN_RES;
+    conn->header_len_limit = 2;
     return true;
 }
 
