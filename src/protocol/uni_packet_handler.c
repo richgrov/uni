@@ -7,7 +7,7 @@
 #include "uni_server.h"
 
 #define UNI_PKT_HANDSHAKE 0x00
-#define UNI_PKT_LOGIN_SUCCESS 0x00
+#define UNI_PKT_LOGIN_START 0x00
 #define UNI_PKT_LOGIN_PLUGIN_REQ 0x04
 #define UNI_PKT_LOGIN_PLUGIN_RES 0x02
 
@@ -41,7 +41,7 @@ static bool uni_recv_handshake(UniConnection *conn) {
 // Handle a 'Login Start' packet from the client.
 static bool uni_recv_login_start(UniConnection *conn) {
     int id;
-    if (!uni_read_varint(conn, &id) || id != UNI_PKT_LOGIN_SUCCESS) {
+    if (!uni_read_varint(conn, &id) || id != UNI_PKT_LOGIN_START) {
         return false;
     }
 
