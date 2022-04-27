@@ -63,6 +63,7 @@ typedef struct {
 
     union {
         int plugin_req_id;
+        void *user_ptr;
     };
 } UniConnection;
 

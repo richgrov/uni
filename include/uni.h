@@ -31,4 +31,45 @@ UniServer *uni_create(uint16_t port, const char *secret, UniError *err);
 
 bool uni_run(UniServer *server);
 
+// Note: All the strings in UniLoginProperty and UniLoginData are pointing to
+// data within a received packet. Be sure to copy away if you need to keep them.
+// None of the strings are null-terminated. Use the _len field to determine
+// their length.
+
+typedef struct {
+    const char *name;
+    int name_len;
+
+    const char *value;
+    int value_len;
+
+    // Will be NULL if no signature was provided.
+    const char *signature;
+    int signature_len;
+} UniLoginProperty;
+
+typedef struct {
+    // The username of the user who logged in. Not guaranteed to be a valid
+    // username.
+    const char *player_name;
+    int name_len;
+
+    // The IPv4 address of the client. E.g. "127.0.0.1"
+    const char *address_str;
+    int address_len;
+
+    // The raw data of the player's UUID.
+    unsigned char *uuid_raw;
+
+    // Additional properties provided by Mojang authentication. See
+    // UniLoginProperty for more information.
+    UniLoginProperty *properties;
+    int num_properties;
+} UniLoginData;
+
+// Called when a player logs in. See UniLoginData for more information. The
+// returned pointer will be used to identify this player in future callbacks
+// unless it is NULL, which will deny the player's login.
+extern void *uni_on_login(UniLoginData *data);
+
 #endif // UNI_H

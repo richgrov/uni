@@ -107,39 +107,39 @@ static bool uni_recv_plugin_res(UniConnection *conn) {
         return false;
     }
 
-    int addr_len;
-    char *address = uni_read_str(conn, 15, &addr_len);
-    if (address == NULL) {
+    UniLoginData data;
+
+    data.address_str = uni_read_str(conn, 15, &data.address_len);
+    if (data.address_str == NULL) {
         return false;
     }
 
-    unsigned char *uuid = uni_read_bytes(conn, 16);
-    if (uuid == NULL) {
+    data.uuid_raw = uni_read_bytes(conn, 16);
+    if (data.uuid_raw == NULL) {
         return false;
     }
 
-    int name_len;
-    char *name = uni_read_str(conn, 16, &name_len);
-    if (name == NULL) {
+    data.player_name = uni_read_str(conn, 16, &data.name_len);
+    if (data.player_name == NULL) {
         return false;
     }
 
-    int num_properties;
-    if (!uni_read_varint(conn, &num_properties)) {
+    if (!uni_read_varint(conn, &data.num_properties) || data.num_properties < 0) {
         return false;
     }
 
-    for (int i = 0; i < num_properties; i++) {
-        int property_name_len;
-        char *property = uni_read_str(conn, 32, &property_name_len);
-        if (property == NULL) {
-            return false;
+    data.properties = malloc(sizeof(UniLoginProperty) * data.num_properties);
+
+    for (int i = 0; i < data.num_properties; i++) {
+        UniLoginProperty *prop = &data.properties[i];
+        prop->name = uni_read_str(conn, 32, &prop->name_len);
+        if (prop->name == NULL) {
+            goto property_fail;
         }
 
-        int val_len;
-        char *value = uni_read_str(conn, 1024, &val_len);
-        if (value == NULL) {
-            return false;
+        prop->value = uni_read_str(conn, 1024, &prop->value_len);
+        if (prop->value == NULL) {
+            goto property_fail;
         }
 
         bool has_sig;
@@ -148,15 +148,28 @@ static bool uni_recv_plugin_res(UniConnection *conn) {
         }
 
         if (has_sig) {
-            int sig_len;
-            char *signature = uni_read_str(conn, 1024, &sig_len);
-            if (signature == NULL) {
-                return false;
+            prop->signature = uni_read_str(conn, 1024, &prop->signature_len);
+            if (prop->signature == NULL) {
+                goto property_fail;
             }
+        } else {
+            prop->signature = NULL;
         }
     }
 
+    void *user_ptr = uni_on_login(&data);
+    free(data.properties);
+
+    if (user_ptr == NULL) {
+        return false;
+    }
+
+    conn->user_ptr = user_ptr;
     return true;
+
+property_fail:
+    free(data.properties);
+    return false;
 }
 
 bool uni_handle_packet(UniConnection *conn) {

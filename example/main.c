@@ -2,6 +2,11 @@
 
 #include <stdio.h>
 
+void *uni_on_login(UniLoginData *data) {
+    printf("Player %.*s logged in.\n", data->name_len, data->player_name);
+    return (void *) 1;
+}
+
 int main(int argc, char** argv) {
     UniError err;
     UniServer *server = uni_create(25566, "your-forwarding-secret", &err);
