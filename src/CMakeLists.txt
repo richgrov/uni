@@ -23,8 +23,7 @@ target_include_directories(uni PUBLIC "${PROJECT_SOURCE_DIR}/include")
 target_include_directories(uni PRIVATE "${PROJECT_SOURCE_DIR}/src")
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    add_custom_command(TARGET uni
-        PRE_LINK
+    execute_process(
         COMMAND "make"
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/deps/liburing"
     )
