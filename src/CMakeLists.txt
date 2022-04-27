@@ -42,3 +42,7 @@ test_big_endian(IS_BIG_ENDIAN)
 if (IS_BIG_ENDIAN)
     target_compile_definitions(uni PRIVATE UNI_BIG_ENDIAN)
 endif()
+
+# hmac_sha256
+add_subdirectory("../deps/hmac_sha256" "build_hmac_sha256")
+target_link_libraries(uni PRIVATE hmac_sha256)
