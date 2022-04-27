@@ -299,7 +299,7 @@ bool uni_net_run(UniNetworking *net) {
                                         break;
 
                                     case UNI_HANDLER_PLUGIN_RES:
-                                        uni_recv_plugin_res(conn);
+                                        success = uni_recv_plugin_res(conn);
                                         break;
                                 }
 

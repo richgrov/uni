@@ -7,6 +7,17 @@
 
 #include "net/uni_connection.h"
 
+// Read a boolean from the connection's read buffer. On success, true is
+// returned and *result is set with the result. On failure, false is returned.
+static inline bool uni_read_bool(UniConnection *buf, bool *result) {
+    if (buf->read_idx + 1 >= buf->packet_len) {
+        return false;
+    }
+
+    *result = buf->packet_buf[buf->read_idx++];
+    return *result == 0 || *result == 1;
+}
+
 // Read a variable-length encoded 32-bit integer from the connection's read
 // buffer. On success, true is returned and *result is set with the result. On
 // failure, false is returned.
@@ -32,6 +43,29 @@ static inline bool uni_read_ushort(UniConnection *buf, uint16_t *result) {
 
     return true;
 }
+
+// Read raw bytes from the connection's read buffer. On success, a pointer to
+// the data is returned. Unlike with reading strings where 'size' is the
+// maximum, in this case, the exact number of bytes will be read as determined
+// by the 'size' parameter. On failure, NULL is returned.
+// Note: The return value points to data within the packet. Be sure to copy it
+// out before the memory is freed.
+static inline char *uni_read_bytes(UniConnection *conn, int size) {
+    if (conn->read_idx + size > conn->packet_len) {
+        return NULL;
+    }
+
+    char *data = &conn->packet_buf[conn->read_idx];
+    conn->read_idx += size;
+    return data;
+}
+
+// Read a string from the connection's read buffer. On success, a pointer to the
+// string is returned and *out_len is set to the length of the string. On
+// failure, NULL is returned.
+// Note: The return value points to data within the packet. Be sure to copy it
+// out before the memory is freed.
+char *uni_read_str(UniConnection *conn, int max_len, int *out_len);
 
 // Read a string from the connection's read buffer, but ignore the actual data.
 // On success, true is returned. On failure, false is returned.

@@ -23,6 +23,25 @@ bool uni_read_varint(UniConnection *buf, int *result) {
     return false;
 }
 
+char *uni_read_str(UniConnection *conn, int max_len, int *out_len) {
+    if (!uni_read_varint(conn, out_len)) {
+        return NULL;
+    }
+
+    if (*out_len < 0 || *out_len > max_len) {
+        return NULL;
+    }
+
+    char *str = &conn->packet_buf[conn->read_idx];
+
+    conn->read_idx += *out_len;
+    if (conn->read_idx <= conn->packet_len) {
+        return str;
+    } else {
+        return NULL;
+    }
+}
+
 bool uni_read_str_ignore(UniConnection *buf, int max_len) {
     int str_len;
     if (!uni_read_varint(buf, &str_len)) {

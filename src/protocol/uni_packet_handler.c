@@ -77,5 +77,74 @@ bool uni_recv_plugin_res(UniConnection *conn) {
         return false;
     }
 
-    return false;
+    // https://forums.velocitypowered.com/t/velocity-modern-player-forwarding-protocol-information/52
+
+    int message_id;
+    if (!uni_read_varint(conn, &message_id) || message_id != conn->plugin_req_id) {
+        return false;
+    }
+
+    bool understood;
+    if (!uni_read_bool(conn, &understood) || !understood) {
+        return false;
+    }
+
+    // TODO: Verify HMAC
+    conn->read_idx += 32;
+
+    int protocol_ver;
+    if (!uni_read_varint(conn, &protocol_ver)) {
+        return false;
+    }
+
+    int addr_len;
+    char *address = uni_read_str(conn, 15, &addr_len);
+    if (address == NULL) {
+        return false;
+    }
+
+    char *uuid = uni_read_bytes(conn, 16);
+    if (uuid == NULL) {
+        return false;
+    }
+
+    int name_len;
+    char *name = uni_read_str(conn, 16, &name_len);
+    if (name == NULL) {
+        return false;
+    }
+
+    int num_properties;
+    if (!uni_read_varint(conn, &num_properties)) {
+        return false;
+    }
+
+    for (int i = 0; i < num_properties; i++) {
+        int property_name_len;
+        char *property = uni_read_str(conn, 32, &property_name_len);
+        if (property == NULL) {
+            return false;
+        }
+
+        int val_len;
+        char *value = uni_read_str(conn, 1024, &val_len);
+        if (value == NULL) {
+            return false;
+        }
+
+        bool has_sig;
+        if (!uni_read_bool(conn, &has_sig)) {
+            return false;
+        }
+
+        if (has_sig) {
+            int sig_len;
+            char *signature = uni_read_str(conn, 1024, &sig_len);
+            if (signature == NULL) {
+                return false;
+            }
+        }
+    }
+
+    return true;
 }
