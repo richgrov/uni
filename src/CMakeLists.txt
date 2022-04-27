@@ -33,6 +33,9 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     target_include_directories(uni PRIVATE "${PROJECT_SOURCE_DIR}/deps/liburing/src/include")
 endif()
 
+# Defines UNI_DEBUG if this is a debug build
+target_compile_definitions(uni PRIVATE "$<$<CONFIG:DEBUG>:UNI_DEBUG>")
+
 # Will define UNI_BIG_ENDIAN if the operating system is big-endian encoding
 include(TestBigEndian)
 test_big_endian(IS_BIG_ENDIAN)
