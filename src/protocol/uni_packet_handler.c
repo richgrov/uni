@@ -50,7 +50,7 @@ bool uni_recv_login_start(UniConnection *conn) {
     int pkt_size =
         uni_varint_size(UNI_PKT_LOGIN_PLUGIN_REQ) +
         uni_varint_size(conn->plugin_req_id) +
-        uni_str_size(sizeof(UNI_PLUGIN_REQ_ID));
+        uni_str_size(sizeof(UNI_PLUGIN_REQ_ID) - 1);
 
     UniPacketOut pkt = uni_alloc_packet(pkt_size);
     if (pkt.buf == NULL) {
@@ -62,7 +62,7 @@ bool uni_recv_login_start(UniConnection *conn) {
     char *cursor = &pkt.buf[pkt.write_idx];
     cursor = uni_write_varint(cursor, UNI_PKT_LOGIN_PLUGIN_REQ);
     cursor = uni_write_varint(cursor, conn->plugin_req_id);
-             uni_write_str(cursor, UNI_PLUGIN_REQ_ID, sizeof(UNI_PLUGIN_REQ_ID));
+             uni_write_str(cursor, UNI_PLUGIN_REQ_ID, sizeof(UNI_PLUGIN_REQ_ID) - 1);
 
     uni_conn_write(conn, &pkt);
 
