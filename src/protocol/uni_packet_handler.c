@@ -13,7 +13,8 @@
 #define UNI_PLUGIN_REQ_ID "velocity:player_info"
 #define UNI_STATE_LOGIN 2
 
-bool uni_recv_handshake(UniConnection *conn) {
+// Handle a 'Handshake' packet from the client.
+static bool uni_recv_handshake(UniConnection *conn) {
     int id;
     if (!uni_read_varint(conn, &id) || id != UNI_PKT_HANDSHAKE) {
         return false;
@@ -36,7 +37,8 @@ bool uni_recv_handshake(UniConnection *conn) {
     return next_state == UNI_STATE_LOGIN;
 }
 
-bool uni_recv_login_start(UniConnection *conn) {
+// Handle a 'Login Start' packet from the client.
+static bool uni_recv_login_start(UniConnection *conn) {
     int id;
     if (!uni_read_varint(conn, &id) || id != UNI_PKT_LOGIN_SUCCESS) {
         return false;
@@ -71,7 +73,8 @@ bool uni_recv_login_start(UniConnection *conn) {
     return true;
 }
 
-bool uni_recv_plugin_res(UniConnection *conn) {
+// Handle a 'Login Plugin Response' packet from the client.
+static bool uni_recv_plugin_res(UniConnection *conn) {
     int id;
     if (!uni_read_varint(conn, &id) || id != UNI_PKT_LOGIN_PLUGIN_RES) {
         return false;
@@ -147,4 +150,19 @@ bool uni_recv_plugin_res(UniConnection *conn) {
     }
 
     return true;
+}
+
+bool uni_handle_packet(UniConnection *conn) {
+    switch (conn->handler) {
+        case UNI_HANDLER_HANDSHAKE:
+            return uni_recv_handshake(conn);
+
+        case UNI_HANDLER_LOGIN_START:
+            return uni_recv_login_start(conn);
+
+        case UNI_HANDLER_PLUGIN_RES:
+            return uni_recv_plugin_res(conn);
+    }
+
+    UNI_UNREACHABLE();
 }

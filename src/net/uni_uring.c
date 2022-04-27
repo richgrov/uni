@@ -288,22 +288,8 @@ bool uni_net_run(UniNetworking *net) {
                             if (conn->write_idx == conn->packet_len) {
                                 uni_conn_prep_handle(conn);
 
-                                bool success;
-                                switch (conn->handler) {
-                                    case UNI_HANDLER_HANDSHAKE:
-                                        success = uni_recv_handshake(conn);
-                                        break;
-
-                                    case UNI_HANDLER_LOGIN_START:
-                                        success = uni_recv_login_start(conn);
-                                        break;
-
-                                    case UNI_HANDLER_PLUGIN_RES:
-                                        success = uni_recv_plugin_res(conn);
-                                        break;
-                                }
-
-                                if (!success) {
+                                if (!uni_handle_packet(conn)) {
+                                    // Something went wrong trying to process this packet.
                                     uni_conn_shutdown(net, conn);
                                 } else {
                                     uni_conn_prep_header(conn);
