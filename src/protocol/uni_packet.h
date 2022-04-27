@@ -50,12 +50,12 @@ static inline bool uni_read_ushort(UniConnection *buf, uint16_t *result) {
 // by the 'size' parameter. On failure, NULL is returned.
 // Note: The return value points to data within the packet. Be sure to copy it
 // out before the memory is freed.
-static inline char *uni_read_bytes(UniConnection *conn, int size) {
+static inline unsigned char *uni_read_bytes(UniConnection *conn, int size) {
     if (conn->read_idx + size > conn->packet_len) {
         return NULL;
     }
 
-    char *data = &conn->packet_buf[conn->read_idx];
+    unsigned char *data = &conn->packet_buf[conn->read_idx];
     conn->read_idx += size;
     return data;
 }

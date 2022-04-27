@@ -106,7 +106,7 @@ static bool uni_recv_plugin_res(UniConnection *conn) {
         return false;
     }
 
-    char *uuid = uni_read_bytes(conn, 16);
+    unsigned char *uuid = uni_read_bytes(conn, 16);
     if (uuid == NULL) {
         return false;
     }

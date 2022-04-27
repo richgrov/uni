@@ -47,14 +47,14 @@ typedef struct {
     UniPacketHandler handler;
     int refcount;
 
-    char *packet_buf;
+    unsigned char *packet_buf;
     int packet_len;
     UniPacketOut out_pkt;
 
     int header_len_limit;
     union {
         struct {
-            char header_buf[2];
+            unsigned char header_buf[2];
             int header_size;
         };
         int write_idx;

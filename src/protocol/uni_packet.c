@@ -10,7 +10,7 @@ bool uni_read_varint(UniConnection *buf, int *result) {
             return false;
         }
 
-        char byte = buf->packet_buf[buf->read_idx];
+        unsigned char byte = buf->packet_buf[buf->read_idx];
         buf->read_idx++;
  
         *result |= (byte & 0b01111111) << (7 * i);
@@ -32,7 +32,7 @@ char *uni_read_str(UniConnection *conn, int max_len, int *out_len) {
         return NULL;
     }
 
-    char *str = &conn->packet_buf[conn->read_idx];
+    char *str = (char *) &conn->packet_buf[conn->read_idx];
 
     conn->read_idx += *out_len;
     if (conn->read_idx <= conn->packet_len) {
