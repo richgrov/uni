@@ -215,150 +215,154 @@ bool uni_net_init(UniServer *server, uint16_t port, UniError *err) {
     return true;
 }
 
-bool uni_run(UniServer *server) {
-    if (listen(server->fd, UNI_CONN_BACKLOG) == -1) {
-        return false;
-    }
+bool uni_listen(UniServer *server) {
+    return listen(server->fd, UNI_CONN_BACKLOG) != -1;
+}
 
-    while (/* TODO: is_running */true) {
-        io_uring_submit_and_wait(&server->ring, 1);
+static void uni_do_poll(UniServer *server) {
+    unsigned head;
+    struct io_uring_cqe *cqe;
+    unsigned count = 0;
 
-        unsigned head;
-        struct io_uring_cqe *cqe;
-        unsigned count = 0;
+    io_uring_for_each_cqe(&server->ring, head, cqe) {
+        count++;
 
-        io_uring_for_each_cqe(&server->ring, head, cqe) {
-            count++;
+        UniUringEntry *entry = (UniUringEntry*) cqe->user_data;
+        UniConnection *conn = entry->conn;
+        switch (entry->action) {
+            case UNI_ACT_ACCEPT:
+                if (cqe->res >= -1) {
+                    conn = malloc(sizeof(UniConnection));
+                    uni_init_conn(server, conn);
+                    uni_conn_prep_header(conn);
+                    conn->fd = cqe->res;
 
-            UniUringEntry *entry = (UniUringEntry*) cqe->user_data;
-            UniConnection *conn = entry->conn;
-            switch (entry->action) {
-                case UNI_ACT_ACCEPT:
-                    if (cqe->res >= -1) {
-                        conn = malloc(sizeof(UniConnection));
-                        uni_init_conn(server, conn);
-                        uni_conn_prep_header(conn);
-                        conn->fd = cqe->res;
+                    uni_uring_timeout(server, conn, 2);
+                    uni_uring_read(server, conn, conn->header_buf, sizeof(conn->header_buf));
+                } else {
+                    uni_dump_net_err("ACCEPT", cqe->res);
+                }
 
-                        uni_uring_timeout(server, conn, 2);
-                        uni_uring_read(server, conn, conn->header_buf, sizeof(conn->header_buf));
-                    } else {
-                        uni_dump_net_err("ACCEPT", cqe->res);
-                    }
+                uni_uring_accept(server, server->fd, (struct sockaddr *) &server->server_addr, &server->addr_len);
+                break;
 
-                    uni_uring_accept(server, server->fd, (struct sockaddr *) &server->server_addr, &server->addr_len);
+            case UNI_ACT_READ:
+                conn->refcount--;
+                if (uni_conn_gc(conn)) {
                     break;
+                }
 
-                case UNI_ACT_READ:
-                    conn->refcount--;
-                    if (uni_conn_gc(conn)) {
-                        break;
-                    }
+                if (cqe->res > 0) {
+                    if (conn->state == UNI_READING_HEADER) {
+                        for (int i = 0; i < cqe->res; i++) {
+                            unsigned char b = conn->header_buf[i];
+                            conn->packet_len |= (b & 0b01111111) << (7 * conn->header_size++);
 
-                    if (cqe->res > 0) {
-                        if (conn->state == UNI_READING_HEADER) {
-                            for (int i = 0; i < cqe->res; i++) {
-                                unsigned char b = conn->header_buf[i];
-                                conn->packet_len |= (b & 0b01111111) << (7 * conn->header_size++);
+                            if (conn->header_size > conn->header_len_limit) {
+                                UNI_DLOG("Disconnect: Header size %d > %d", conn->header_size, conn->header_len_limit);
+                            #ifdef UNI_DEBUG
+                                uni_dump_conn(conn);
+                            #endif // UNI_DEBUG
 
-                                if (conn->header_size > conn->header_len_limit) {
-                                    UNI_DLOG("Disconnect: Header size %d > %d", conn->header_size, conn->header_len_limit);
-                                #ifdef UNI_DEBUG
+                                uni_conn_shutdown(server, conn);
+                                goto nothing;
+                            } else if ((b & 0b10000000) == 0) {
+                                conn->packet_buf = realloc(conn->packet_buf, conn->packet_len);
+                                if (conn->packet_buf == NULL) {
+                                    UNI_DLOG("Disconnect: realloc(%d) failed", conn->packet_len);
                                     uni_dump_conn(conn);
-                                #endif // UNI_DEBUG
 
                                     uni_conn_shutdown(server, conn);
-                                    goto nothing;
-                                } else if ((b & 0b10000000) == 0) {
-                                    conn->packet_buf = realloc(conn->packet_buf, conn->packet_len);
-                                    if (conn->packet_buf == NULL) {
-                                        UNI_DLOG("Disconnect: realloc(%d) failed", conn->packet_len);
-                                        uni_dump_conn(conn);
-
-                                        uni_conn_shutdown(server, conn);
-                                        goto nothing;
-                                    }
-
-                                    if (i == 0 && cqe->res == 2) {
-                                        conn->packet_buf[0] = conn->header_buf[1];
-                                        uni_conn_prep_body(conn);
-                                        conn->write_idx++;
-                                    } else {
-                                        uni_conn_prep_body(conn);
-                                    }
-
-                                    uni_uring_read(server, conn, &conn->packet_buf[conn->write_idx], conn->packet_len - conn->write_idx);
                                     goto nothing;
                                 }
-                            }
 
-                            uni_uring_read(server, conn, conn->header_buf, 1);
-
-                            nothing: ;
-                        } else {
-                            conn->write_idx += cqe->res;
-                            if (conn->write_idx == conn->packet_len) {
-                                uni_conn_prep_handle(conn);
-
-                                if (!uni_handle_packet(conn)) {
-                                    // Something went wrong trying to process this packet.
-                                    uni_conn_shutdown(server, conn);
+                                if (i == 0 && cqe->res == 2) {
+                                    conn->packet_buf[0] = conn->header_buf[1];
+                                    uni_conn_prep_body(conn);
+                                    conn->write_idx++;
                                 } else {
-                                    uni_conn_prep_header(conn);
-                                    uni_uring_read(server, conn, conn->header_buf, sizeof(conn->header_buf));
+                                    uni_conn_prep_body(conn);
                                 }
-                            } else {
+
                                 uni_uring_read(server, conn, &conn->packet_buf[conn->write_idx], conn->packet_len - conn->write_idx);
+                                goto nothing;
                             }
                         }
-                    } else if (cqe->res == 0) {
-                        uni_conn_shutdown(server, conn);
+
+                        uni_uring_read(server, conn, conn->header_buf, 1);
+
+                        nothing: ;
                     } else {
-                        uni_dump_conn_err("READ", conn, cqe->res);
-                    }
-                    break;
+                        conn->write_idx += cqe->res;
+                        if (conn->write_idx == conn->packet_len) {
+                            uni_conn_prep_handle(conn);
 
-                case UNI_ACT_WRITE:
-                    conn->refcount--;
-                    if (uni_conn_gc(conn)) {
-                        break;
-                    }
-
-                    if (cqe->res > 0) {
-                        conn->out_pkt.write_idx += cqe->res;
-
-                        if (conn->out_pkt.write_idx == conn->out_pkt.len) {
-                            free(conn->out_pkt.buf);
+                            if (!uni_handle_packet(conn)) {
+                                // Something went wrong trying to process this packet.
+                                uni_conn_shutdown(server, conn);
+                            } else {
+                                uni_conn_prep_header(conn);
+                                uni_uring_read(server, conn, conn->header_buf, sizeof(conn->header_buf));
+                            }
                         } else {
-                            uni_uring_write(server, conn);
+                            uni_uring_read(server, conn, &conn->packet_buf[conn->write_idx], conn->packet_len - conn->write_idx);
                         }
+                    }
+                } else if (cqe->res == 0) {
+                    uni_conn_shutdown(server, conn);
+                } else {
+                    uni_dump_conn_err("READ", conn, cqe->res);
+                }
+                break;
+
+            case UNI_ACT_WRITE:
+                conn->refcount--;
+                if (uni_conn_gc(conn)) {
+                    break;
+                }
+
+                if (cqe->res > 0) {
+                    conn->out_pkt.write_idx += cqe->res;
+
+                    if (conn->out_pkt.write_idx == conn->out_pkt.len) {
+                        free(conn->out_pkt.buf);
                     } else {
-                        uni_dump_conn_err("WRITE", conn, cqe->res);
+                        uni_uring_write(server, conn);
                     }
-                    break;
+                } else {
+                    uni_dump_conn_err("WRITE", conn, cqe->res);
+                }
+                break;
 
-                case UNI_ACT_TIMEOUT:
-                    conn->refcount--;
-                    if (cqe->res != -ECANCELED) {
-                        if (!uni_conn_gc(conn)) {
-                            shutdown(conn->fd, SHUT_RDWR);
-                        }
+            case UNI_ACT_TIMEOUT:
+                conn->refcount--;
+                if (cqe->res != -ECANCELED) {
+                    if (!uni_conn_gc(conn)) {
+                        shutdown(conn->fd, SHUT_RDWR);
                     }
-                    break;
+                }
+                break;
 
-                case UNI_ACT_TIMEOUT_CANCEL:
-                    conn->refcount--;
-                    uni_conn_gc(conn);
-                    break;
-            }
-
-            free(entry);
+            case UNI_ACT_TIMEOUT_CANCEL:
+                conn->refcount--;
+                uni_conn_gc(conn);
+                break;
         }
 
-        io_uring_cq_advance(&server->ring, count);
+        free(entry);
     }
 
-    return true;
+    io_uring_cq_advance(&server->ring, count);
+}
+
+void uni_poll(UniServer *server) {
+    io_uring_submit_and_wait(&server->ring, 1);
+    uni_do_poll(server);
+}
+
+void uni_try_poll(UniServer *server) {
+    io_uring_submit(&server->ring);
+    uni_do_poll(server);
 }
 
 void uni_conn_write(UniConnection *conn, UniPacketOut *packet) {

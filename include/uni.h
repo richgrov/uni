@@ -31,6 +31,18 @@ UniServer *uni_create(uint16_t port, const char *secret, UniError *err);
 
 bool uni_run(UniServer *server);
 
+// Starts accepting connections.
+bool uni_listen(UniServer *server);
+
+// Polls the server for new I/O events. Should be called repeatedly and will
+// block until a new event occurs.
+// See also uni_try_poll()
+void uni_poll(UniServer *server);
+
+// Similar to uni_poll(), but will return immediately if there are no new
+// events.
+void uni_try_poll(UniServer *server);
+
 // Note: All the strings in UniLoginProperty and UniLoginData are pointing to
 // data within a received packet. Be sure to copy away if you need to keep them.
 // None of the strings are null-terminated. Use the _len field to determine

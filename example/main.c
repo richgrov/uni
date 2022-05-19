@@ -35,6 +35,12 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    uni_run(server);
+    if (!uni_listen(server)) {
+        return 1;
+    }
+
+    while (true) {
+        uni_poll(server);
+    }
     return 0;
 }
