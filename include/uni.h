@@ -43,10 +43,10 @@ void uni_poll(UniServer *server);
 // events.
 void uni_try_poll(UniServer *server);
 
-// Note: All the strings in UniLoginProperty and UniLoginData are pointing to
-// data within a received packet. Be sure to copy away if you need to keep them.
-// None of the strings are null-terminated. Use the _len field to determine
-// their length.
+// Note: All the strings in UniLoginProperty and UniLoginData with the exception
+// of player_name are pointing to data within a received packet. Be sure to copy
+// away if you need to keep them. None of the strings are null-terminated. Use
+// the _len field to determine their length.
 
 typedef struct {
     const char *name;
@@ -63,8 +63,7 @@ typedef struct {
 typedef struct {
     // The username of the user who logged in. Not guaranteed to be a valid
     // username.
-    const char *player_name;
-    int name_len;
+    char player_name[17];
 
     // The IPv4 address of the client. E.g. "127.0.0.1"
     const char *address_str;

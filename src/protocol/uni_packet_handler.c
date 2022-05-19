@@ -119,10 +119,14 @@ static bool uni_recv_plugin_res(UniConnection *conn) {
         return false;
     }
 
-    data.player_name = uni_read_str(conn, 16, &data.name_len);
-    if (data.player_name == NULL) {
+    int name_len;
+    char *player_name = uni_read_str(conn, 16, &name_len);
+    if (player_name == NULL) {
         return false;
     }
+
+    memcpy(data.player_name, player_name, name_len);
+    data.player_name[name_len] = '\0';
 
     if (!uni_read_varint(conn, &data.num_properties) || data.num_properties < 0) {
         return false;
@@ -166,10 +170,11 @@ static bool uni_recv_plugin_res(UniConnection *conn) {
 
     conn->user_ptr = user_ptr;
 
+    name_len = strlen(data.player_name);
     int pkt_size =
         uni_varint_size(UNI_PKT_LOGIN_SUCCESS) +
         16 + /* UUID */
-        uni_str_size(data.name_len);
+        uni_str_size(name_len);
 
     UniPacketOut pkt = uni_alloc_packet(pkt_size);
     if (pkt.buf == NULL) {
@@ -180,7 +185,7 @@ static bool uni_recv_plugin_res(UniConnection *conn) {
     char *cursor = &pkt.buf[pkt.write_idx];
     cursor = uni_write_varint(cursor, UNI_PKT_LOGIN_SUCCESS);
     cursor = uni_write_bytes(cursor, data.uuid_raw, 16);
-             uni_write_str(cursor, data.player_name, data.name_len);
+             uni_write_str(cursor, data.player_name, name_len);
 
     uni_conn_write(conn, &pkt);
     return true;

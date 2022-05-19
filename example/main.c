@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 void *uni_on_login(UniServer *server, UniLoginData *data) {
-    printf("Player %.*s logged in.\n", data->name_len, data->player_name);
+    printf("Player %s logged in.\n", data->player_name);
     return (void *) 1;
 }
 
