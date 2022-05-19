@@ -58,8 +58,7 @@ static bool uni_recv_login_start(UniConnection *conn) {
 
     UniPacketOut pkt = uni_alloc_packet(pkt_size);
     if (pkt.buf == NULL) {
-        // TODO: More verbose error message
-        UNI_LOG("Failed to allocate packet", 0);
+        UNI_LOG("Disconnect: uni_alloc_packet(%d) failed", pkt_size);
         return false;
     }
 

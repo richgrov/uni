@@ -27,15 +27,9 @@ typedef struct {
     UniConnection *conn;
 } UniUringEntry;
 
-static void uni_dump_net_err(const char *type, int res) {
-    UNI_LOG("-- UNI %s ERROR --", type);
-    UNI_LOG("res: %d, res string: %s, errno: %d, errno string: %s", res, strerror(-res), errno, strerror(errno));
-}
-
-static void uni_dump_conn_err(const char *type, UniConnection *conn, int res) {
+void uni_dump_conn(UniConnection *conn) {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wformat-extra-args"
-    uni_dump_net_err(type, res);
     UNI_LOG("UniConnection: {", 0);
     UNI_LOG("  fd = %d", conn->fd);
     UNI_LOG("  state = %d", conn->state);
@@ -47,6 +41,16 @@ static void uni_dump_conn_err(const char *type, UniConnection *conn, int res) {
     UNI_LOG("  read/write idx = %d", conn->write_idx);
     UNI_LOG("}", 0);
 #pragma clang diagnostic pop
+}
+
+static void uni_dump_net_err(const char *type, int res) {
+    UNI_LOG("-- UNI %s ERROR --", type);
+    UNI_LOG("res: %d, res string: %s, errno: %d, errno string: %s", res, strerror(-res), errno, strerror(errno));
+}
+
+static void uni_dump_conn_err(const char *type, UniConnection *conn, int res) {
+    uni_dump_net_err(type, res);
+    uni_dump_conn(conn);
 }
 
 void uni_uring_accept(UniNetworking *net, int socket, struct sockaddr *addr, socklen_t *addr_len) {
@@ -258,11 +262,19 @@ bool uni_net_run(UniNetworking *net) {
                                 conn->packet_len |= (b & 0b01111111) << (7 * conn->header_size++);
 
                                 if (conn->header_size > conn->header_len_limit) {
+                                    UNI_DLOG("Disconnect: Header size %d > %d", conn->header_size, conn->header_len_limit);
+                                #ifdef UNI_DEBUG
+                                    uni_dump_conn(conn);
+                                #endif // UNI_DEBUG
+
                                     uni_conn_shutdown(net, conn);
                                     goto nothing;
                                 } else if ((b & 0b10000000) == 0) {
                                     conn->packet_buf = realloc(conn->packet_buf, conn->packet_len);
                                     if (conn->packet_buf == NULL) {
+                                        UNI_DLOG("Disconnect: realloc(%d) failed", conn->packet_len);
+                                        uni_dump_conn(conn);
+
                                         uni_conn_shutdown(net, conn);
                                         goto nothing;
                                     }
