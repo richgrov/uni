@@ -7,29 +7,18 @@
 
 #include "net/uni_networking.h"
 
-struct UniServerImpl {
-    UniNetworking net;
-    const char *secret;
-    int secret_len;
-};
-
 UniServer *uni_create(uint16_t port, const char *secret, UniError *err) {
     UniServer *server = malloc(sizeof(UniServer));
 
-    server->net.server = server;
     server->secret = secret;
     server->secret_len = (int) strlen(secret);
 
-    if (!uni_net_init(&server->net, port, err)) {
+    if (!uni_net_init(server, port, err)) {
         free(server);
         return NULL;
     }
 
     return server;
-}
-
-bool uni_run(UniServer *server) {
-    return uni_net_run(&server->net);
 }
 
 bool uni_verify_hmac(UniServer *server, const unsigned char *data, int data_len, const unsigned char* signature) {

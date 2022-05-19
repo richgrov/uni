@@ -35,7 +35,7 @@ typedef struct {
 } UniPacketOut;
 
 typedef struct {
-    UniNetworking *net;
+    UniServer *server;
 
 #ifdef UNI_OS_LINUX
     int fd;
@@ -67,8 +67,8 @@ typedef struct {
     };
 } UniConnection;
 
-static inline void uni_init_conn(UniNetworking *net, UniConnection *conn) {
-    conn->net = net;
+static inline void uni_init_conn(UniServer *server, UniConnection *conn) {
+    conn->server = server;
     conn->handler = UNI_HANDLER_HANDSHAKE;
     conn->refcount = 0;
     conn->packet_buf = NULL;

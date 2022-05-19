@@ -98,7 +98,7 @@ static bool uni_recv_plugin_res(UniConnection *conn) {
         return false;
     }
 
-    if (!uni_verify_hmac(conn->net->server, &conn->packet_buf[conn->read_idx], conn->packet_len - conn->read_idx, hmac)) {
+    if (!uni_verify_hmac(conn->server, &conn->packet_buf[conn->read_idx], conn->packet_len - conn->read_idx, hmac)) {
         return false;
     }
 
