@@ -82,6 +82,6 @@ typedef struct {
 // Called when a player logs in. See UniLoginData for more information. The
 // returned pointer will be used to identify this player in future callbacks
 // unless it is NULL, which will deny the player's login.
-extern void *uni_on_login(UniLoginData *data);
+extern void *uni_on_login(UniServer *server, UniLoginData *data);
 
 #endif // UNI_H
