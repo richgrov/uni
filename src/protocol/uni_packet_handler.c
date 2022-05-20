@@ -148,7 +148,7 @@ static bool uni_recv_plugin_res(UniConnection *conn) {
 
         bool has_sig;
         if (!uni_read_bool(conn, &has_sig)) {
-            return false;
+            goto property_fail;
         }
 
         if (has_sig) {
