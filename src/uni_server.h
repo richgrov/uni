@@ -15,7 +15,7 @@
 #endif // UNI_OS_LINUX
 
 struct UniServerImpl {
-    const char *secret;
+    char *secret;
     int secret_len;
 
 #ifdef UNI_OS_LINUX

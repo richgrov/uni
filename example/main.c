@@ -42,5 +42,7 @@ int main(int argc, char** argv) {
     while (true) {
         uni_poll(server);
     }
+
+    uni_free(server);
     return 0;
 }

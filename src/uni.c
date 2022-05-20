@@ -10,15 +10,21 @@
 UniServer *uni_create(uint16_t port, const char *secret, UniError *err) {
     UniServer *server = malloc(sizeof(UniServer));
 
-    server->secret = secret;
     server->secret_len = (int) strlen(secret);
+    server->secret = malloc(server->secret_len);
+    memcpy(server->secret, secret, server->secret_len);
 
     if (!uni_net_init(server, port, err)) {
         free(server);
+        free(server->secret);
         return NULL;
     }
 
     return server;
+}
+
+void uni_free(UniServer *server) {
+    free(server->secret);
 }
 
 bool uni_verify_hmac(UniServer *server, const unsigned char *data, int data_len, const unsigned char* signature) {

@@ -29,6 +29,10 @@ typedef enum {
 // be made.
 UniServer *uni_create(uint16_t port, const char *secret, UniError *err);
 
+// Cleans up memory related to a server handle. Only needs to be called if
+// uni_create() succeeds.
+void uni_free(UniServer *server);
+
 bool uni_run(UniServer *server);
 
 // Starts accepting connections.
