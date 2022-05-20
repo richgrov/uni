@@ -170,6 +170,9 @@ bool uni_net_init(UniServer *server, uint16_t port, UniError *err) {
         return false;
     }
 
+    int optval = 1;
+    setsockopt(server->fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
+
     if (bind(server->fd, (struct sockaddr *) &server_addr, sizeof(server_addr)) == -1) {
         if (err != NULL) {
             switch (errno) {
