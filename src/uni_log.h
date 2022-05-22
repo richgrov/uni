@@ -14,4 +14,4 @@
 #define UNI_DLOG
 #endif // !UNI_DEBUG
 
-#endif // UNI_LOG_H
+#endif // !UNI_LOG_H

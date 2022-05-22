@@ -5,4 +5,4 @@
 #define UNI_OS_LINUX
 #endif // __linux__
 
-#endif // UNI_OS_CONSTANTS_H
+#endif // !UNI_OS_CONSTANTS_H

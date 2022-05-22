@@ -8,4 +8,4 @@
 // Processes the current packet in the connection's read buffer.
 bool uni_handle_packet(UniConnection *conn);
 
-#endif // UNI_PACKET_HANDLER_H
+#endif // !UNI_PACKET_HANDLER_H

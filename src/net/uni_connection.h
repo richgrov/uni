@@ -99,4 +99,4 @@ static inline void uni_conn_prep_handle(UniConnection *conn) {
 // operation.
 void uni_conn_write(UniConnection *conn, UniPacketOut *packet);
 
-#endif // UNI_CONNECTION_H
+#endif // !UNI_CONNECTION_H

@@ -8,4 +8,4 @@
 
 bool uni_net_init(UniServer *server, uint16_t port, UniError *err);
 
-#endif // UNI_NETWORKING_H
+#endif // !UNI_NETWORKING_H

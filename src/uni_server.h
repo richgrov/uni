@@ -30,4 +30,4 @@ struct UniServerImpl {
 // 32 bytes long.
 bool uni_verify_hmac(UniServer *server, const unsigned char *data, int data_len, const unsigned char* signature);
 
-#endif // UNI_SERVER_H
+#endif // !UNI_SERVER_H

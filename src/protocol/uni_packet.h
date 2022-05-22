@@ -130,4 +130,4 @@ static inline char *uni_write_str(char *dest, const char *str, int len) {
 // field of the returned value will be NULL.
 UniPacketOut uni_alloc_packet(int size);
 
-#endif // UNI_PACKET_H
+#endif // !UNI_PACKET_H

@@ -87,4 +87,4 @@ typedef struct {
 // unless it is NULL, which will deny the player's login.
 extern void *uni_on_login(UniServer *server, UniLoginData *data);
 
-#endif // UNI_H
+#endif // !UNI_H
