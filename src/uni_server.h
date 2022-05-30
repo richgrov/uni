@@ -9,7 +9,9 @@
 #include "uni_os_constants.h"
 #include "uni.h"
 
-#ifdef UNI_OS_LINUX
+#if defined(UNI_OS_WINDOWS)
+#include <WinSock2.h>
+#elif defined(UNI_OS_LINUX)
 #include "liburing.h"
 #include <netinet/in.h>
 #endif // UNI_OS_LINUX
@@ -18,7 +20,10 @@ struct UniServerImpl {
     char *secret;
     int secret_len;
 
-#ifdef UNI_OS_LINUX
+#if defined(UNI_OS_WINDOWS)
+    SOCKET socket;
+    HANDLE iocp;
+#elif defined(UNI_OS_LINUX)
     struct io_uring ring;
     int fd;
     struct sockaddr_in server_addr;

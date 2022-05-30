@@ -11,7 +11,9 @@ set(UNI_SOURCES
     uni_server.h
 )
 
-if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    set(UNI_SOURCES ${UNI_SOURCES} net/uni_iocp.c)
+elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     set(UNI_SOURCES ${UNI_SOURCES} net/uni_uring.c)
 endif()
 
@@ -20,7 +22,9 @@ add_library(uni ${UNI_SOURCES})
 target_include_directories(uni PUBLIC "${PROJECT_SOURCE_DIR}/include")
 target_include_directories(uni PRIVATE "${PROJECT_SOURCE_DIR}/src")
 
-if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    target_link_libraries(uni PRIVATE Ws2_32)
+elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     execute_process(
         COMMAND "make"
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/deps/liburing"
