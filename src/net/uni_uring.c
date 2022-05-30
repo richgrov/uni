@@ -12,8 +12,6 @@
 #include "protocol/uni_packet_handler.h"
 #include "uni_log.h"
 
-#define UNI_CONN_BACKLOG 16
-
 typedef enum {
     UNI_ACT_READ,
     UNI_ACT_WRITE,
