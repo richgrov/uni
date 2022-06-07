@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 
+#include "uni.h"
 #include "uni_networking.h"
 #include "uni_os_constants.h"
 
@@ -34,7 +35,7 @@ typedef struct {
     int write_idx;
 } UniPacketOut;
 
-typedef struct {
+struct UniConnectionImpl {
     UniServer *server;
 
 #ifdef UNI_OS_LINUX
@@ -65,7 +66,7 @@ typedef struct {
         int plugin_req_id;
         void *user_ptr;
     };
-} UniConnection;
+};
 
 static inline void uni_init_conn(UniServer *server, UniConnection *conn) {
     conn->server = server;

@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 typedef struct UniServerImpl UniServer;
+typedef struct UniConnectionImpl UniConnection;
 
 typedef enum {
     // A socket with the same address and port is already being used.
