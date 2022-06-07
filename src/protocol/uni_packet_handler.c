@@ -15,6 +15,12 @@
 #define UNI_PLUGIN_REQ_ID "velocity:player_info"
 #define UNI_STATE_LOGIN 2
 
+#define UNI_CHECK_ALLOC(pkt, type, size)                               \
+    if ((pkt).buf == NULL) {                                           \
+        UNI_LOG("PACKET '%s' ALLOC(%d) FAILED", type, size);           \
+        return false;                                                  \
+    }
+
 // Handle a 'Handshake' packet from the client.
 static bool uni_recv_handshake(UniConnection *conn) {
     int id;
@@ -57,10 +63,7 @@ static bool uni_recv_login_start(UniConnection *conn) {
         uni_str_size(sizeof(UNI_PLUGIN_REQ_ID) - 1);
 
     UniPacketOut pkt = uni_alloc_packet(pkt_size);
-    if (pkt.buf == NULL) {
-        UNI_LOG("Disconnect: uni_alloc_packet(%d) failed", pkt_size);
-        return false;
-    }
+    UNI_CHECK_ALLOC(pkt, "login plugin request", pkt_size);
 
     char *cursor = &pkt.buf[pkt.write_idx];
     cursor = uni_write_varint(cursor, UNI_PKT_LOGIN_PLUGIN_REQ);
@@ -177,10 +180,7 @@ static bool uni_recv_plugin_res(UniConnection *conn) {
         uni_str_size(name_len);
 
     UniPacketOut pkt = uni_alloc_packet(pkt_size);
-    if (pkt.buf == NULL) {
-        UNI_LOG("Failed to allocate packet", 0);
-        return false;
-    }
+    UNI_CHECK_ALLOC(pkt, "login success", pkt_size);
 
     char *cursor = &pkt.buf[pkt.write_idx];
     cursor = uni_write_varint(cursor, UNI_PKT_LOGIN_SUCCESS);
