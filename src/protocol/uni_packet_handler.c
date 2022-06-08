@@ -164,7 +164,7 @@ static bool uni_recv_plugin_res(UniConnection *conn) {
         }
     }
 
-    void *user_ptr = uni_on_login(conn->server, &data);
+    void *user_ptr = uni_on_login(conn->server, conn, &data);
     free(data.properties);
 
     if (user_ptr == NULL) {

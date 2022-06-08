@@ -1,10 +1,18 @@
 #include "uni.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
-void *uni_on_login(UniServer *server, UniLoginData *data) {
+typedef struct {
+    UniConnection *conn;
+} Player;
+
+void *uni_on_login(UniServer *server, UniConnection *conn, UniLoginData *data) {
     printf("Player %s logged in.\n", data->player_name);
-    return (void *) 1;
+
+    Player *player = malloc(sizeof(Player));
+    player->conn = conn;
+    return player;
 }
 
 int main(int argc, char** argv) {
