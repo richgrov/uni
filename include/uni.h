@@ -18,7 +18,7 @@ typedef enum {
     // The operating system does not support the protocol or feature required.
     UNI_ERR_UNSUPPORTED,
 
-    UNI_ERR_UNKNOWN
+    UNI_ERR_UNKNOWN,
 } UniError;
 
 // Initializes a uni server.

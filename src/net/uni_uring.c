@@ -17,7 +17,7 @@ typedef enum {
     UNI_ACT_WRITE,
     UNI_ACT_ACCEPT,
     UNI_ACT_TIMEOUT,
-    UNI_ACT_TIMEOUT_CANCEL
+    UNI_ACT_TIMEOUT_CANCEL,
 } UniUringAction;
 
 typedef struct {
