@@ -70,7 +70,7 @@ static bool uni_recv_login_start(UniConnection *conn) {
     cursor = uni_write_varint(cursor, conn->plugin_req_id);
              uni_write_str(cursor, UNI_PLUGIN_REQ_ID, sizeof(UNI_PLUGIN_REQ_ID) - 1);
 
-    uni_conn_write(conn, &pkt);
+    uni_write(conn, &pkt);
 
     conn->handler = UNI_HANDLER_PLUGIN_RES;
     conn->header_len_limit = 2;
@@ -187,7 +187,7 @@ static bool uni_recv_plugin_res(UniConnection *conn) {
     cursor = uni_write_bytes(cursor, data.uuid_raw, 16);
              uni_write_str(cursor, data.player_name, name_len);
 
-    uni_conn_write(conn, &pkt);
+    uni_write(conn, &pkt);
     return true;
 
 property_fail:

@@ -88,4 +88,15 @@ typedef struct {
 // unless it is NULL, which will deny the player's login.
 extern void *uni_on_login(UniServer *server, UniLoginData *data);
 
+typedef struct {
+    char* buf;
+    int len;
+    int write_idx;
+} UniPacketOut;
+
+// Writes a packet to the connection. Warning: This function is not thread-safe,
+// nor will it attempt to queue packets if the previous packet hasn't been
+// fully written. Synchronization is the responsibility of the caller.
+void uni_write(UniConnection *conn, UniPacketOut *packet);
+
 #endif // !UNI_H

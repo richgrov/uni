@@ -22,19 +22,6 @@ typedef enum {
     UNI_HANDLER_PLUGIN_RES
 } UniPacketHandler;
 
-typedef struct {
-    char* buf;
-    int len;
-
-    // Used for two reasons:
-    // 1. Each packet requires a varint header at the beginning to indicate its
-    // length. This is the index AFTER the header so the rest of the packet can
-    // be written properly.
-    // 2. When writing the packet, not all data may be writen at once. This
-    // tracks how much has, and hasn't been written.
-    int write_idx;
-} UniPacketOut;
-
 struct UniConnectionImpl {
     UniServer *server;
 
@@ -95,9 +82,5 @@ static inline void uni_conn_prep_body(UniConnection *conn) {
 static inline void uni_conn_prep_handle(UniConnection *conn) {
     conn->read_idx = 0;
 }
-
-// Prepares the connection's state for writing a packet + queues the write
-// operation.
-void uni_conn_write(UniConnection *conn, UniPacketOut *packet);
 
 #endif // !UNI_CONNECTION_H
