@@ -380,3 +380,10 @@ void uni_write(UniConnection *conn, UniPacketOut *packet) {
     conn->out_pkt = *packet;
     uni_uring_write(conn->server, conn);
 }
+
+void uni_release(UniConnection *conn) {
+    conn->refcount--;
+    if (!uni_conn_gc(conn)) {
+        uni_conn_shutdown(conn->server, conn);
+    }
+}

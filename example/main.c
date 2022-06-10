@@ -17,6 +17,10 @@ void *uni_on_login(UniServer *server, UniConnection *conn, UniLoginData *data) {
 
 void uni_on_join(UniServer *server, void *player) {
     puts("Player joined.");
+
+    // Disconnect the client.
+    uni_release(((Player *) player)->conn);
+    free(player);
 }
 
 int main(int argc, char** argv) {

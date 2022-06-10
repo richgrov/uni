@@ -103,4 +103,8 @@ typedef struct {
 // fully written. Synchronization is the responsibility of the caller.
 void uni_write(UniConnection *conn, UniPacketOut *packet);
 
+// Mark a connection as "to-be-closed". Note that this will not disconnect the
+// client immediately, 
+void uni_release(UniConnection *conn);
+
 #endif // !UNI_H
