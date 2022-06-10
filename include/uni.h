@@ -90,6 +90,8 @@ typedef struct {
 // use it for any reason beyond saving it for later use.
 extern void *uni_on_login(UniServer *server, UniConnection *conn, UniLoginData *data);
 
+extern void uni_on_join(UniServer *server, void *user_ptr);
+
 typedef struct {
     char* buf;
     int len;
