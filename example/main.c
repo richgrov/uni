@@ -7,7 +7,7 @@ typedef struct {
     UniConnection *conn;
 } Player;
 
-void *uni_on_login(UniServer *server, UniConnection *conn, UniLoginData *data) {
+void *uni_on_login(void *server, UniConnection *conn, UniLoginData *data) {
     printf("Player %s logged in.\n", data->player_name);
 
     Player *player = malloc(sizeof(Player));
@@ -15,7 +15,7 @@ void *uni_on_login(UniServer *server, UniConnection *conn, UniLoginData *data) {
     return player;
 }
 
-void uni_on_join(UniServer *server, void *player) {
+void uni_on_join(void *server, void *player) {
     puts("Player joined.");
 
     // Disconnect the client.
@@ -25,7 +25,7 @@ void uni_on_join(UniServer *server, void *player) {
 
 int main(int argc, char** argv) {
     UniError err;
-    UniServer *server = uni_create(25566, "your-forwarding-secret", &err);
+    UniServer *server = uni_create(25566, "your-forwarding-secret", NULL, &err);
 
     if (server == NULL) {
         printf("Couldn't start server: ");

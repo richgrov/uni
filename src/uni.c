@@ -7,12 +7,13 @@
 
 #include "net/uni_networking.h"
 
-UniServer *uni_create(uint16_t port, const char *secret, UniError *err) {
+UniServer *uni_create(uint16_t port, const char *secret, void *user_ptr, UniError *err) {
     UniServer *server = malloc(sizeof(UniServer));
 
     server->secret_len = (int) strlen(secret);
     server->secret = malloc(server->secret_len);
     memcpy(server->secret, secret, server->secret_len);
+    server->user_ptr = user_ptr;
 
     if (!uni_net_init(server, port, err)) {
         free(server);

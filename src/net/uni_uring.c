@@ -333,7 +333,7 @@ static void uni_do_poll(UniServer *server) {
                         free(conn->out_pkt.buf);
 
                         if (conn->handler == UNI_HANDLER_LOGIN_SUCCESS) {
-                            uni_on_join(server, conn->user_ptr);
+                            uni_on_join(server->user_ptr, conn->user_ptr);
                             conn->handler = UNI_HANDLER_PLAY;
                         }
                     } else {

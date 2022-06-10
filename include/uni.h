@@ -24,11 +24,13 @@ typedef enum {
 // Initializes a uni server.
 // 'secret' is the shared secret configured in the proxy. It must be null-
 // terminated.
+// 'user_ptr' will be passed to all future callbacks. However, when making uni_*
+// calls, use the pointer returned by this function.
 // In case of error, NULL will be returned and *err will be set to the error
 // which occurred.
 // err is allowed to be NULL, if so, no attempt at returning an error code will
 // be made.
-UniServer *uni_create(uint16_t port, const char *secret, UniError *err);
+UniServer *uni_create(uint16_t port, const char *secret, void *user_ptr, UniError *err);
 
 // Cleans up memory related to a server handle. Only needs to be called if
 // uni_create() succeeds.
@@ -88,9 +90,9 @@ typedef struct {
 // unless it is NULL, which will deny the player's login.
 // Warning: The connection pointer provided is not yet in the PLAY state. Do not
 // use it for any reason beyond saving it for later use.
-extern void *uni_on_login(UniServer *server, UniConnection *conn, UniLoginData *data);
+extern void *uni_on_login(void *server_user_ptr, UniConnection *conn, UniLoginData *data);
 
-extern void uni_on_join(UniServer *server, void *user_ptr);
+extern void uni_on_join(void *server_user_ptr, void *conn_user_ptr);
 
 typedef struct {
     char* buf;

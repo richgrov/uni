@@ -19,6 +19,7 @@
 struct UniServerImpl {
     char *secret;
     int secret_len;
+    void *user_ptr;
 
 #if defined(UNI_OS_WINDOWS)
     SOCKET socket;
