@@ -171,7 +171,9 @@ static bool uni_recv_plugin_res(UniConnection *conn) {
         return false;
     }
 
+    conn->refcount++;
     conn->user_ptr = user_ptr;
+    conn->handler = UNI_HANDLER_LOGIN_SUCCESS;
 
     name_len = strlen(data.player_name);
     int pkt_size =
@@ -195,6 +197,10 @@ property_fail:
     return false;
 }
 
+bool uni_recv_play(UniConnection *conn) {
+    return false; // TODO
+}
+
 bool uni_handle_packet(UniConnection *conn) {
     switch (conn->handler) {
         case UNI_HANDLER_HANDSHAKE:
@@ -205,6 +211,13 @@ bool uni_handle_packet(UniConnection *conn) {
 
         case UNI_HANDLER_PLUGIN_RES:
             return uni_recv_plugin_res(conn);
+
+        case UNI_HANDLER_LOGIN_SUCCESS:
+            return false; // This is an internal handler. The client should
+                          // never send any packets during this phase.
+
+        case UNI_HANDLER_PLAY:
+            return uni_recv_play(conn);
     }
 
     UNI_UNREACHABLE();

@@ -15,6 +15,10 @@ void *uni_on_login(UniServer *server, UniConnection *conn, UniLoginData *data) {
     return player;
 }
 
+void uni_on_join(UniServer *server, void *player) {
+    puts("Player joined.");
+}
+
 int main(int argc, char** argv) {
     UniError err;
     UniServer *server = uni_create(25566, "your-forwarding-secret", &err);

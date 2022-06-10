@@ -20,6 +20,8 @@ typedef enum {
     UNI_HANDLER_HANDSHAKE,
     UNI_HANDLER_LOGIN_START,
     UNI_HANDLER_PLUGIN_RES,
+    UNI_HANDLER_LOGIN_SUCCESS,
+    UNI_HANDLER_PLAY,
 } UniPacketHandler;
 
 struct UniConnectionImpl {
