@@ -91,6 +91,11 @@ static inline int uni_str_size(int str_len) {
     return uni_varint_size(str_len) + str_len;
 }
 
+static inline char *uni_write_byte(char *dest, unsigned char val) {
+    *dest = val;
+    return dest + 1;
+}
+
 // Encodes/writes a varint to the specified buffer.
 static inline char *uni_write_varint(char *dest, int val) {
     int i = 0;
