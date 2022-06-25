@@ -36,8 +36,6 @@ UniServer *uni_create(uint16_t port, const char *secret, void *user_ptr, UniErro
 // uni_create() succeeds.
 void uni_free(UniServer *server);
 
-bool uni_run(UniServer *server);
-
 // Starts accepting connections.
 bool uni_listen(UniServer *server);
 
