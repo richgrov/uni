@@ -323,8 +323,7 @@ static void uni_do_poll(UniServer *server) {
                 }
 
                 if (cqe->res > 0) {
-                    // Used for two reasons:
-                    // Although wrire_idx is used to determine the first byte after the varint
+                    // Although write_idx is used to determine the first byte after the varint
                     // header, we can re-used it here to determine how much of the packet has
                     // already been written.
                     conn->out_pkt.write_idx += cqe->res;
