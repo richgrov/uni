@@ -15,6 +15,7 @@
 #define UNI_PLUGIN_REQ_ID "velocity:player_info"
 #define UNI_STATE_LOGIN 2
 
+// Note: Similar macro UNI_CHECK_PKT in uni_play.c
 #define UNI_CHECK_ALLOC(pkt, type, size)                               \
     if ((pkt).buf == NULL) {                                           \
         UNI_LOG("PACKET '%s' ALLOC(%d) FAILED", type, size);           \

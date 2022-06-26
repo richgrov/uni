@@ -5,6 +5,7 @@ set(UNI_SOURCES
     protocol/uni_packet.h
     protocol/uni_packet_handler.c
     protocol/uni_packet_handler.h
+    protocol/uni_play.c
     uni.c
     uni_log.h
     uni_os_constants.h
