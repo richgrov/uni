@@ -104,3 +104,33 @@ UniPacketOut uni_pkt_join_game(
 
     return pkt;
 }
+
+bool uni_recv_play(UniConnection *conn) {
+    int id;
+    if (!uni_read_varint(conn, &id)) {
+        return false;
+    }
+
+    #define UNI_RECV(data) uni_on_packet_received(conn->server->user_ptr, conn->user_ptr, id, (data))
+
+    switch (id) {
+        case UNI_PIN_PLUGIN_MSG: {
+            UniInPluginMessage packet;
+
+            packet.channel = uni_read_str(conn, 255, &packet.channel_len);
+            if (packet.channel == NULL) {
+                return false;
+            }
+
+            packet.data_len = conn->packet_len - conn->read_idx;
+            packet.data = uni_read_bytes(conn, packet.data_len);
+            if (packet.data == NULL) {
+                return false;
+            }
+
+            UNI_RECV(&packet);
+        } break;
+    }
+
+    return true;
+}

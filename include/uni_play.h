@@ -6,6 +6,17 @@
 
 #include "uni.h"
 
+typedef enum {
+    UNI_PIN_PLUGIN_MSG = 0x0C,
+} UniPlayIn;
+
+typedef struct {
+    const char *channel;
+    int channel_len;
+    unsigned char *data;
+    int data_len;
+} UniInPluginMessage;
+
 UniPacketOut uni_pkt_join_game(
     int entity_id,
     bool hardcore,

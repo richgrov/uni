@@ -201,10 +201,6 @@ property_fail:
     return false;
 }
 
-bool uni_recv_play(UniConnection *conn) {
-    return false; // TODO
-}
-
 bool uni_handle_packet(UniConnection *conn) {
     switch (conn->handler) {
         case UNI_HANDLER_HANDSHAKE:

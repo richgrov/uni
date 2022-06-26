@@ -92,6 +92,16 @@ extern void *uni_on_login(void *server_user_ptr, UniConnection *conn, UniLoginDa
 
 extern void uni_on_join(void *server_user_ptr, void *conn_user_ptr);
 
+// Called when the server recieves a packet from a client. This is only called
+// for players in the PLAY state.
+// pkt_struct is a pointer to a struct which represents the packet's payload. It
+// can be inferred from packet_id. See uni_play.h for a list of packets.
+// Warning: Unless otherwise noted, the pkt_struct and it's fields point to
+// stack-allocated data. Be sure to copy any data before the function returns.
+extern bool uni_on_packet_received(
+    void *server_user_ptr, void *conn_user_ptr, int packet_id, void *pkt_struct
+);
+
 typedef struct {
     char* buf;
     int len;
