@@ -332,9 +332,15 @@ static void uni_do_poll(UniServer *server) {
                     if (conn->out_pkt.write_idx == conn->out_pkt.len) {
                         free(conn->out_pkt.buf);
 
-                        if (conn->handler == UNI_HANDLER_LOGIN_SUCCESS) {
-                            uni_on_join(server->user_ptr, conn->user_ptr);
-                            conn->handler = UNI_HANDLER_PLAY;
+                        switch (conn->handler) {
+                            case UNI_HANDLER_LOGIN_SUCCESS:
+                                uni_on_join(server->user_ptr, conn->user_ptr);
+                                conn->handler = UNI_HANDLER_PLAY;
+                                break;
+
+                            case UNI_HANDLER_PLAY:
+                                uni_on_write_finish(conn->user_ptr);
+                                break;
                         }
                     } else {
                         uni_uring_write(server, conn);

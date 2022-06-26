@@ -100,8 +100,13 @@ typedef struct {
 
 // Writes a packet to the connection. Warning: This function is not thread-safe,
 // nor will it attempt to queue packets if the previous packet hasn't been
-// fully written. Synchronization is the responsibility of the caller.
+// fully written. Synchronization is the responsibility of the caller. See also
+// uni_on_write_finish()
 void uni_write(UniConnection *conn, UniPacketOut *packet);
+
+// Called when a write operation concludes. This function is guaranteed to be
+// called from the same thread which called uni_poll() or uni_try_poll().
+extern void uni_on_write_finish(void *user_ptr);
 
 // Mark a connection as "to-be-closed". Note that this will not disconnect the
 // client immediately, 

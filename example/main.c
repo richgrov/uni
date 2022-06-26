@@ -23,6 +23,9 @@ void uni_on_join(void *server, void *player) {
     free(player);
 }
 
+void uni_on_write_finish(void *user_ptr) {
+}
+
 int main(int argc, char** argv) {
     UniError err;
     UniServer *server = uni_create(25566, "your-forwarding-secret", NULL, &err);
