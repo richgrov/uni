@@ -130,6 +130,36 @@ static inline char *uni_write_str(char *dest, const char *str, int len) {
     return dest + len;
 }
 
+static inline char *uni_write_int(char *dest, int32_t val) {
+#ifdef UNI_BIG_ENDIAN
+    *((int32_t *) dest) = val;
+#else // UNI_BIG_ENDIAN
+    dest[0] = (unsigned char) (val >> 24);
+    dest[1] = (unsigned char) (val >> 16);
+    dest[2] = (unsigned char) (val >> 8);
+    dest[3] = (unsigned char) val;
+#endif // !UNI_BIG_ENDIAN
+
+    return dest + sizeof(int32_t);
+}
+
+static inline char *uni_write_long(char *dest, int64_t val) {
+#ifdef UNI_BIG_ENDIAN
+    *((int64_t *) dest) = val;
+#else // UNI_BIG_ENDIAN
+    dest[0] = (unsigned char) (val >> 56);
+    dest[1] = (unsigned char) (val >> 48);
+    dest[2] = (unsigned char) (val >> 40);
+    dest[3] = (unsigned char) (val >> 32);
+    dest[4] = (unsigned char) (val >> 24);
+    dest[5] = (unsigned char) (val >> 16);
+    dest[6] = (unsigned char) (val >> 8);
+    dest[7] = (unsigned char) val;
+#endif // !UNI_BIG_ENDIAN
+
+    return dest + sizeof(int64_t);
+}
+
 // Allocates a packet with the given size on the heap. If the desired length of
 // the packet exceeds the maximum length of a varint header (3 bytes), the 'buf'
 // field of the returned value will be NULL.
