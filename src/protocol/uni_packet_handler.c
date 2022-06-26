@@ -179,7 +179,9 @@ static bool uni_recv_plugin_res(UniConnection *conn) {
     int pkt_size =
         uni_varint_size(UNI_PKT_LOGIN_SUCCESS) +
         16 + /* UUID */
-        uni_str_size(name_len);
+        uni_str_size(name_len) +
+        uni_varint_size(0); // TODO: Determine if properties actually need to be
+                            // sent
 
     UniPacketOut pkt = uni_alloc_packet(pkt_size);
     UNI_CHECK_ALLOC(pkt, "login success", pkt_size);
@@ -187,7 +189,8 @@ static bool uni_recv_plugin_res(UniConnection *conn) {
     char *cursor = &pkt.buf[pkt.write_idx];
     cursor = uni_write_varint(cursor, UNI_PKT_LOGIN_SUCCESS);
     cursor = uni_write_bytes(cursor, data.uuid_raw, 16);
-             uni_write_str(cursor, data.player_name, name_len);
+    cursor = uni_write_str(cursor, data.player_name, name_len);
+    cursor = uni_write_varint(cursor, 0);
 
     uni_write(conn, &pkt);
     return true;
